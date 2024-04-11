@@ -1,27 +1,39 @@
-package tokenizer
+package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"strings"
+	"net/http"
+	"regexp"
 )
 
-func main() {
-	input := "Hello, world! This is a tokenizer example."
-
-	// Tokenize the input string
-	tokens := tokenize(input)
-
-	// Print the tokens
-	for _, token := range tokens {
-		fmt.Println(token)
-	}
+type Message struct {
+	Text string `json:"text"`
 }
 
-func tokenize(input string) []string {
-	// Split the input string into tokens
-	tokens := strings.Fields(input)
-
+func Tokenize(s string) []string {
+	re := regexp.MustCompile(`\w+|[!?]`)
+	tokens := re.FindAllString(s, -1)
 	return tokens
 }
 
-//yolo
+func handleRequest(w http.ResponseWriter, r *http.Request) {
+	var msg Message
+	err := json.NewDecoder(r.Body).Decode(&msg)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	tokens := Tokenize(msg.Text)
+	err = json.NewEncoder(w).Encode(tokens)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func main() {
+	http.HandleFunc("/tokenize", handleRequest)
+	fmt.Println("Server is running on port 8080")
+	http.ListenAndServe(":8080", nil)
+}
