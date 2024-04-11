@@ -60,7 +60,7 @@ func main() {
 	}
 
 	defer res.Body.Close()
-
+// Print debug res-code 
 	if res.StatusCode != 200 {
 		fmt.Println("Expected status code 200, got ", res.StatusCode)
 	} else {
