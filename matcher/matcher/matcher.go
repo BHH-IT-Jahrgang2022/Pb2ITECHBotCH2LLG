@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"regexp"
 )
 
 func Test() string {
@@ -51,4 +52,33 @@ func printAllMatches(matches *[]Matches) {
 		fmt.Println(match.Keywords)
 		fmt.Println(match.Phrase)
 	}
+}
+
+func Match(input string, matches *[]Matches) string {
+	var possibleMatches []int
+	for i, match := range *matches {
+		var matchCounter int
+		for _, keyword := range match.Keywords {
+			r := regexp.MustCompile("(?i)" + keyword)
+			if r.MatchString(input) {
+				matchCounter++
+			}
+
+		}
+		if matchCounter == len(match.Keywords) {
+			possibleMatches = append(possibleMatches, i)
+		}
+	}
+
+	var maxLength int
+	var bestMatch int
+
+	for _, i := range possibleMatches {
+		if len((*matches)[i].Keywords) > maxLength {
+			maxLength = len((*matches)[i].Keywords)
+			bestMatch = i
+		}
+	}
+
+	return (*matches)[bestMatch].Phrase
 }
