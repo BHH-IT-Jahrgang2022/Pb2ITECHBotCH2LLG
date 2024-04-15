@@ -17,6 +17,10 @@ func Tokenize(s string) []string {
 	return tokens
 }
 
+type TokenResponse struct {
+	Tokens []string `json:"tokens"`
+}
+
 func handleRequest(w http.ResponseWriter, r *http.Request) {
 	var msg Message
 	err := json.NewDecoder(r.Body).Decode(&msg)
@@ -25,7 +29,8 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	tokens := Tokenize(msg.Text)
-	err = json.NewEncoder(w).Encode(tokens)
+	resp := TokenResponse{Tokens: tokens}
+	err = json.NewEncoder(w).Encode(resp)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
