@@ -19,6 +19,7 @@ type Matches struct {
 }
 
 func LoadTable() *[]Matches {
+	// TODO: Update to DB connection instead of local JSON file
 	jsonFile, err := os.Open("./data/data.json")
 	if err != nil {
 		fmt.Printf("Error opening JSON file: %v\n", err)
