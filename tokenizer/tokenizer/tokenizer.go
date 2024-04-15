@@ -1,4 +1,4 @@
-package main
+package tokenizer
 
 import (
 	"encoding/json"
@@ -32,7 +32,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func main() {
+func TokenInit() {
 	http.HandleFunc("/tokenize", handleRequest)
 	fmt.Println("Server is running on port 8080")
 	http.ListenAndServe(":8080", nil)
