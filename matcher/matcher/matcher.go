@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
+	"net/http"
 	"regexp"
 )
 
@@ -15,20 +15,45 @@ func Test() string {
 
 type Matches struct {
 	Keywords []string `json:"keywords"`
-	Phrase   string   `json:"answer"`
+	Phrase   string   `json:"response"`
 }
 
 func LoadTable() *[]Matches {
 	// TODO: Update to DB connection instead of local JSON file
-	jsonFile, err := os.Open("./data/data.json")
+
+	/*
+		jsonFile, err := os.Open("./data/data.json")
+		if err != nil {
+			fmt.Printf("Error opening JSON file: %v\n", err)
+			return &[]Matches{}
+		}
+		defer jsonFile.Close()
+		byteValue, err := io.ReadAll(jsonFile)
+		if err != nil {
+			fmt.Print("Error reading JSON file: ")
+			fmt.Println(err)
+			return &[]Matches{}
+		}
+
+		var matches []Matches
+		err = json.Unmarshal(byteValue, &matches)
+		if err != nil {
+			fmt.Print("Error unmarshalling JSON file: ")
+			fmt.Println(err)
+			return &[]Matches{}
+		}
+	*/
+
+	resp, err := http.Get("http://127.0.0.1:8080/data")
 	if err != nil {
-		fmt.Printf("Error opening JSON file: %v\n", err)
+		fmt.Print("Error getting data from server: ")
+		fmt.Println(err)
 		return &[]Matches{}
 	}
-	defer jsonFile.Close()
-	byteValue, err := io.ReadAll(jsonFile)
+	defer resp.Body.Close()
+	byteValue, err := io.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Print("Error reading JSON file: ")
+		fmt.Print("Error reading response body: ")
 		fmt.Println(err)
 		return &[]Matches{}
 	}
@@ -63,6 +88,7 @@ func Match(input string, matches *[]Matches) string {
 			r := regexp.MustCompile("(?i)" + keyword)
 			if r.MatchString(input) {
 				matchCounter++
+				fmt.Println("Matched: ", keyword)
 			}
 
 		}
@@ -75,7 +101,7 @@ func Match(input string, matches *[]Matches) string {
 	var bestMatch int
 
 	for _, i := range possibleMatches {
-		if len((*matches)[i].Keywords) > maxLength {
+		if len((*matches)[i].Keywords) >= maxLength {
 			maxLength = len((*matches)[i].Keywords)
 			bestMatch = i
 		}
