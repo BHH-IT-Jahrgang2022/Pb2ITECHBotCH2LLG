@@ -1,8 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"matcher/matcher"
-	"strings"
+	"net/url"
 
 	"github.com/gin-gonic/gin"
 )
@@ -30,17 +31,16 @@ func main() {
 			"message": matcher.Test(),
 		})
 	})
-	router.POST("/match", func(c *gin.Context) {
-		var json struct {
-			Input []string `json:"tokens"`
-		}
-		if err := c.ShouldBindJSON(&json); err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
-			return
-		}
-		req := strings.Join(json.Input, "")
+	router.GET("/match", func(c *gin.Context) {
+
+		req := c.Query("input")
+
+		decoded := url.QueryEscape(req)
+
+		fmt.Println("decoded: ", decoded)
+
+		fmt.Println("Received request: ", req)
 		c.JSON(200, gin.H{
-			"query":    json.Input,
 			"response": matcher.Match(req, matches),
 		})
 	})
@@ -51,6 +51,6 @@ func main() {
 		})
 	})
 
-	router.Run("127.0.0.1:8080")
+	router.Run("127.0.0.1:8081")
 
 }
