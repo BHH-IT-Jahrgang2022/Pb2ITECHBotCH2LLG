@@ -1,68 +1,84 @@
 package api
 
 import (
-	"bytes"
 	"encoding/json"
 	fmt "fmt"
+	"io"
 	"net/http"
+	"os"
 
-	uuid "github.com/satori/go.uuid"
+	websocket "github.com/gorilla/websocket"
 
 	"github.com/gin-gonic/gin"
 )
 
-type Query struct {
-	SessionToken string `json:"session_token"`
-	Query string `json:"query"`
-}
-
-type Query_Text struct {
-	Query string `json:"query"`
-}
-
-type Matcher_Response struct {
-	Response string `json:"response"`
-}
-
 type Response struct {
-	SessionToken string `json:"session_token"`
-	Query string `json:"query"`
 	Response string `json:"message"`
 }
 
 // Helper function handling the chat logic for the chat endpoint
 // This function is not exported and can only be used within the api package
 // Call as Go routine
-func chatFunc(query string, tokenizer_route string, matcher_route string) string {
+func chatFunc(query string, analyzer_route string) string {
 	// Chat logic
 	result := "Something went wrong"
-	// Build the query as json
-	query_json, err := json.Marshal(Query_Text{Query: query})
+	// Send the Text to the analyzer as query parameters and get the JSON response
+	response, err := http.Get(analyzer_route + "?query=" + query)
 	if err != nil {
 		fmt.Println(err)
 	} else {
-		// Call the tokenizer
-		tokenizer_response, err := http.Post(tokenizer_route, "application/json", bytes.NewBuffer(query_json))
-		if err != nil {
-			fmt.Println(err)
+		// Decode the JSON response
+		var res Response
+		json.NewDecoder(response.Body).Decode(&res)
+		result = res.Response
+	}
+	return result
+}
+
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+}
+
+func readFromSocket(c *websocket.Conn) string {
+	_, message, err := c.ReadMessage()
+	if err != nil {
+		if err == io.EOF {
+			fmt.Println("Connection closed")
 		} else {
-			// Call the matcher
-			matcher_response, err := http.Post(matcher_route, "application/json", tokenizer_response.Body)
-			if err != nil {
-				fmt.Println(err)
-			} else {
-				// Get the result
-				decoded_matcher_response := Matcher_Response{}
-				err := json.NewDecoder(matcher_response.Body).Decode(&decoded_matcher_response)
-				if err != nil {
-					fmt.Println(err)
-				} else {
-					result = decoded_matcher_response.Response
-				}
+			fmt.Println(err)
+		}
+	}
+	return string(message)
+}
+
+func writeToSocket(c *websocket.Conn, message string) {
+	err := c.WriteMessage(websocket.TextMessage, []byte(message))
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
+func handler(w http.ResponseWriter, r *http.Request) {
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		fmt.Println(err)
+		return
+	} else {
+		// Get environment variable for the analyzer route
+		// If not set, use default value
+		analyzer_route := os.Getenv("ANALYZER_ROUTE")
+		if analyzer_route == "" {
+			analyzer_route = "http://localhost:8081/getanswer"
+		} else {
+			for {
+				message := readFromSocket(conn)
+				fmt.Println("Message received: " + message)
+				answer := chatFunc(message, analyzer_route)
+				writeToSocket(conn, answer)
 			}
 		}
 	}
-	return result
 }
 
 // Starts the Api
@@ -75,58 +91,13 @@ func StartApi() {
 			"message": "pong",
 		})
 	})
-	// Endpoint for connecting a session
-	r.GET("connect", func(c *gin.Context) {
-		session_token := uuid.NewV4().String()
-		sessions[session_token] = true
-		c.JSON(http.StatusOK, gin.H{
-			"session_token": session_token,
-		})
+	//Create Websocket connection with Client
+	r.GET("/chat", func(c *gin.Context) {
+		go handler(c.Writer, c.Request)
 	})
-	// Endpoint for disconnecting a session
-	r.GET("disconnect", func(c *gin.Context) {
-		session_token := c.Query("session_token")
-		fmt.Println(sessions)
-		fmt.Println(session_token)
-		if _, ok := sessions[session_token]; ok {
-			if sessions[session_token] {
-				sessions[session_token] = false
-				c.JSON(http.StatusOK, gin.H{
-					"message": "disconnected",
-				})
-			} else {
-				c.JSON(http.StatusNotFound, gin.H{
-					"message": "session already disconnected",
-				})
-			}
-		} else {
-			c.JSON(http.StatusNotFound, gin.H{
-				"message": "session not found",
-			})
-		}
-	})
-	// Main Endpoint for chatting, calls all other services
-	r.GET("chat", func(c *gin.Context) {
-		var query Query
-		err := c.BindJSON(&query)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"message": "invalid json",
-			})
-			return
-		} else {
-			if _, ok := sessions[query.SessionToken]; ok {
-				if sessions[query.SessionToken] {
-					answer := chatFunc(query.Query, "http://localhost:8081/tokenize", "http://localhost:8082/match")
-					c.JSON(http.StatusOK, gin.H{
-						"session_token": query.SessionToken,
-						"query": query.Query,
-						"message": answer,
-					})
-
 	// Endpoint only for testing purposes
-	r.GET("chat/sessionless", func(c *gin.Context) {
-		answer := chatFunc("Hello", "http://localhost:8081/tokenize", "http://localhost:8082/match")
+	r.GET("chat/socketless", func(c *gin.Context) {
+		answer := chatFunc("Hello", "http://localhost:8081/getanswer")
 		c.JSON(http.StatusOK, gin.H{
 			"message": answer,
 		})
