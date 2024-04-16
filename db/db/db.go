@@ -23,7 +23,7 @@ type Data struct {
 
 func FetchData() *[]Data {
 	var data []Data
-	clientOptions := options.Client().ApplyURI("mongodb://user:password@127.0.0.1:27017/?authSource=db")
+	clientOptions := options.Client().ApplyURI("mongodb://api:password@192.168.5.11:27017/?authSource=test")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	if cancel == nil {
@@ -171,4 +171,45 @@ func FetchData() *[]Data {
 	fmt.Println("Connection to MongoDB closed.")
 
 	return &data
+}
+
+func InsertData(data Data, collection string) {
+	clientOptions := options.Client().ApplyURI("mongodb://api:password@192.168.5.11:27017/?authSource=test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	if cancel == nil {
+		log.Fatal(cancel)
+		return
+	}
+
+	client, err := mongo.Connect(ctx, clientOptions)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	err = client.Ping(ctx, nil)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	fmt.Println("Connected to MongoDB!")
+
+	collectionName := client.Database("test").Collection(collection)
+
+	doc := bson.D{
+		{"keywords", data.Keywords},
+		{"response", data.Response},
+	}
+
+	insertResult, err := collectionName.InsertOne(ctx, doc)
+
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	fmt.Println("Inserted a single document: ", insertResult.InsertedID)
+
 }
