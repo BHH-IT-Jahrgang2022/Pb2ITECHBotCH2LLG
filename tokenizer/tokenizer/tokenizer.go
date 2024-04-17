@@ -1,10 +1,11 @@
 package tokenizer
 
 import (
-	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"regexp"
+	"strings"
 )
 
 type Message struct {
@@ -12,7 +13,7 @@ type Message struct {
 }
 
 func Tokenize(s string) []string {
-	re := regexp.MustCompile(`[\p{L}\d_]+|[!?]`)
+	re := regexp.MustCompile(`[\p{L}\d_]+`)
 	tokens := re.FindAllString(s, -1)
 	return tokens
 }
@@ -22,19 +23,31 @@ type TokenResponse struct {
 }
 
 func handleRequest(w http.ResponseWriter, r *http.Request) {
-	var msg Message
-	err := json.NewDecoder(r.Body).Decode(&msg)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	query := r.URL.Query().Get("query")
+	if query == "" {
+		http.Error(w, "Missing query parameter", http.StatusBadRequest)
 		return
 	}
-	tokens := Tokenize(msg.Text)
-	resp := TokenResponse{Tokens: tokens}
-	err = json.NewEncoder(w).Encode(resp)
+
+	tokens := Tokenize(query)
+
+	joinedTokens := strings.Join(tokens, "")
+
+	resp, err := http.Get("/match?input=" + joinedTokens)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(body)
 }
 
 func TokenInit() {
