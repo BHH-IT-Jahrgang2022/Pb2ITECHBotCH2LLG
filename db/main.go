@@ -29,6 +29,7 @@ func main() {
 	})
 
 	router.GET("/data", func(c *gin.Context) {
+		data := db.FetchData()
 		c.JSON(200, data)
 	})
 
@@ -48,9 +49,7 @@ func main() {
 		}
 		fmt.Println("got JSON")
 		db.InsertData(requestBody.Data, requestBody.Collection)
-		c.JSON(200, gin.H{
-			"message": "Inserting data",
-		})
+		c.JSON(200, requestBody)
 	})
 
 	router.Run("127.0.0.1:8080")

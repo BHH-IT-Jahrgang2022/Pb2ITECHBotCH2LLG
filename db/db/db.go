@@ -210,6 +210,8 @@ func InsertData(data Data, collection string) {
 		return
 	}
 
+	client.Disconnect(ctx)
+
 	fmt.Println("Inserted a single document: ", insertResult.InsertedID)
 
 }
