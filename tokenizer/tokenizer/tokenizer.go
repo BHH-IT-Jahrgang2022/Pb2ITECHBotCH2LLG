@@ -1,9 +1,11 @@
 package tokenizer
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"regexp"
 	"strings"
 )
@@ -31,9 +33,20 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 
 	tokens := Tokenize(query)
 
+	fmt.Println(tokens)
+
 	joinedTokens := strings.Join(tokens, "")
 
-	resp, err := http.Get("/match?input=" + joinedTokens)
+	fmt.Println(joinedTokens)
+
+	matcherURL := os.Getenv("MATCHER_URL")
+
+	if matcherURL == "" {
+		matcherURL = "http://localhost:8080" // Default-Wert
+	}
+
+	resp, err := http.Get(matcherURL + "/match?input=" + joinedTokens)
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -43,6 +56,15 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Println(string(body))
+
+	var jsonData map[string]interface{}
+	err = json.Unmarshal(body, &jsonData)
+	if err != nil {
+		http.Error(w, "Received invalid JSON from matcher", http.StatusInternalServerError)
 		return
 	}
 
