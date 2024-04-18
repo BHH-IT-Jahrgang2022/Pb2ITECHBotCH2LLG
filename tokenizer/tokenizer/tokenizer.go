@@ -17,7 +17,6 @@ type Message struct {
 func Tokenize(s string) []string {
 	re := regexp.MustCompile(`[\p{L}\d_]+`)
 	tokens := re.FindAllString(s, -1)
-	fmt.Printf("Type: %T, Length: %d, Capacity: %d, Value: %v\n", tokens, len(tokens), cap(tokens), tokens)
 	return tokens
 }
 
@@ -34,11 +33,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 
 	tokens := Tokenize(query)
 
-	fmt.Println(tokens)
-
 	joinedTokens := strings.Join(tokens, "")
-
-	fmt.Println(joinedTokens)
 
 	matcherURL := os.Getenv("MATCHER_URL")
 
@@ -59,8 +54,6 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	fmt.Println(string(body))
 
 	var jsonData map[string]interface{}
 	err = json.Unmarshal(body, &jsonData)
