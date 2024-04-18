@@ -1,0 +1,37 @@
+services:
+  logging:
+    build: .
+    container_name: "logging-api"
+    depends_on:
+      - sqlite-container
+    ports:
+      - "9200:9200"
+    environment:
+      - "LOGGING_API_PORT=:9200"
+    
+  sqlite-container:
+    container_name: sqlite-container
+    image: alpine:latest
+    volumes:
+      - database:/data
+    ports:
+      - "9001:9001"
+    command: sh -c "apk --no-cache add sqlite && cp /data/initial-db.sqlite /data/db.sqlite && sqlite3 /data/db.sqlite < /data/init.sql && tail -f /dev/null"
+  
+  sqlitebrowser:
+    image: linuxserver/sqlitebrowser
+    ports:
+      - "3000:3000"
+    depends_on:
+      - sqlite-container
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=UTC
+      - ENABLE_UWSGI=true
+    volumes:
+      - database:/data
+    container_name: sqlitebrowser
+  
+volumes:
+  database:
