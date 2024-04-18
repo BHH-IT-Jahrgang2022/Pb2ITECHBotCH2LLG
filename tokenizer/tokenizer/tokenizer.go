@@ -17,6 +17,7 @@ type Message struct {
 func Tokenize(s string) []string {
 	re := regexp.MustCompile(`[\p{L}\d_]+`)
 	tokens := re.FindAllString(s, -1)
+	fmt.Printf("Type: %T, Length: %d, Capacity: %d, Value: %v\n", tokens, len(tokens), cap(tokens), tokens)
 	return tokens
 }
 

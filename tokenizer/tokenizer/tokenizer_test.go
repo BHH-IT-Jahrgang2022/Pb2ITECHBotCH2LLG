@@ -1,15 +1,17 @@
 package tokenizer
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"os"
+	"reflect"
 	"testing"
 )
 
-func TestTokenize(t *testing.T) {
+func TestMatcherResponse(t *testing.T) {
 	// Mock the matcher server
 	matcherServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -48,5 +50,35 @@ func TestTokenize(t *testing.T) {
 	expected := `{"response": "hallo auch"}`
 	if rr.Body.String() != expected {
 		t.Errorf("handler returned unexpected body: got %v want %v", rr.Body.String(), expected)
+	}
+}
+
+func TestTokenize(t *testing.T) {
+	testCases := []struct {
+		input    string
+		expected []string
+	}{
+		{"hello world", []string{"hello", "world"}},
+		{"hello, world!", []string{"hello", "world"}},
+		{"", []string{}},
+		{"  $§& ", []string{}},
+		{"hello   world", []string{"hello", "world"}},
+		{"hello *§$%(§&)world!", []string{"hello", "world"}},
+	}
+
+	for _, testCase := range testCases {
+		output := Tokenize(testCase.input)
+		fmt.Printf("Output for %q: %v\n", testCase.input, output)
+		fmt.Printf("Output   >>> Type: %T, Length: %d, Capacity: %d, Value: %v\n", output, len(output), cap(output), output)
+		fmt.Printf("Expected >>> Type: %T, Length: %d, Capacity: %d, Value: %v\n", testCase.expected, len(testCase.expected), cap(testCase.expected), testCase.expected)
+		if testCase.expected == nil {
+			t.Errorf("Expected output should not be nil")
+		} else if len(output) == 0 && len(testCase.expected) == 0 {
+			// Both slices are empty, so they are equal
+			continue
+		} else if !reflect.DeepEqual(output, testCase.expected) {
+			fmt.Printf("Actual: %v, Expected: %v\n", output, testCase.expected)
+			t.Errorf("Tokenize(%q) = %v, want %v", testCase.input, output, testCase.expected)
+		}
 	}
 }
