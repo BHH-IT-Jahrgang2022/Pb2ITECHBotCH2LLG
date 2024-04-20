@@ -182,3 +182,95 @@ func TestWrongQuantityOfAttributes(t *testing.T) {
 		t.Errorf("handler returned unexpected body: got %v want %v", received, expected)
 	}
 }
+
+func TestInvalidJsonFromMatcher(t *testing.T) {
+	// Create a server to mock the matcher which returns an invalid response like a string or an array
+	matcherServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		io.WriteString(w, "invalid JSON")
+	}))
+	defer matcherServer.Close()
+
+	// Set the MATCHER_URL environment variable to the URL of the mock matcher server
+	os.Setenv("MATCHER_URL", matcherServer.URL)
+	var matcherURL string
+	oldMatcherURL := matcherURL
+	matcherURL = matcherServer.URL
+	defer func() { matcherURL = oldMatcherURL }()
+
+	// Create a new request to the tokenizer server with a query that will be tokenized
+	query := "hello world!@#$%^&*()"
+	escapedQuery := url.QueryEscape(query)
+	req, err := http.NewRequest("GET", "http://localhost:8080/tokenize?query="+escapedQuery, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Create a new recorder to record the response from the tokenizer server
+	rr := httptest.NewRecorder()
+
+	// Create a new handler from the handleRequest function
+	handler := http.HandlerFunc(handleRequest)
+
+	// Send the request to the tokenizer server
+	handler.ServeHTTP(rr, req)
+
+	// Check if the status code of the response is 500 (Internal Server Error)
+	if status := rr.Code; status != http.StatusInternalServerError {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
+	}
+
+	// Check if the body of the response is the expected error message
+	expected := "Received invalid JSON from matcher"
+	received := strings.TrimSpace(rr.Body.String())
+	if received != expected {
+		t.Errorf("handler returned unexpected body: got %v want %v", received, expected)
+	}
+
+}
+
+func TestHttpMethod(t *testing.T) {
+	tests := []struct {
+		method string
+		status int
+	}{
+		{"POST", http.StatusMethodNotAllowed},
+		{"PUT", http.StatusMethodNotAllowed},
+		{"DELETE", http.StatusMethodNotAllowed},
+		{"PATCH", http.StatusMethodNotAllowed},
+		{"GET", http.StatusOK},
+	}
+
+	// Create a server to mock the matcher which returns an invalid response like a string or an array
+	matcherServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		io.WriteString(w, `{"response": "hallo auch"}`)
+	}))
+	defer matcherServer.Close()
+
+	// Set the MATCHER_URL environment variable to the URL of the mock matcher server
+	os.Setenv("MATCHER_URL", matcherServer.URL)
+	var matcherURL string
+	oldMatcherURL := matcherURL
+	matcherURL = matcherServer.URL
+	defer func() { matcherURL = oldMatcherURL }()
+
+	for _, test := range tests {
+		req, err := http.NewRequest(test.method, "http://localhost:8080/tokenize?query=hello", nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		rr := httptest.NewRecorder()
+		handler := http.HandlerFunc(handleRequest)
+
+		handler.ServeHTTP(rr, req)
+
+		fmt.Println(rr.Result())
+		fmt.Println(rr.Body.String())
+
+		if status := rr.Code; status != test.status {
+			t.Errorf("handler returned wrong status code: got %v want %v", status, test.status)
+		}
+	}
+
+}

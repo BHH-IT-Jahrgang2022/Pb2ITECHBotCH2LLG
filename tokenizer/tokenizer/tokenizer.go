@@ -28,6 +28,12 @@ type TokenResponse struct {
 }
 
 func handleRequest(w http.ResponseWriter, r *http.Request) {
+
+	// checks if the request method is GET
+	if r.Method != http.MethodGet {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
 	// parses the query parameter from the URL into a string and checks if it is empty
 	query := r.URL.Query().Get("query")
 	if query == "" {
