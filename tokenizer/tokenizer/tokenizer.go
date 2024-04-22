@@ -59,8 +59,8 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	resp, err := http.Get(matcher_URL + "/match?input=" + joinedTokens)
 
 	// checks if the request to the matcher failed
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err != nil || resp == nil {
+		http.Error(w, "GET request to matcher failed", http.StatusInternalServerError)
 		return
 	}
 
