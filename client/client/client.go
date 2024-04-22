@@ -50,22 +50,22 @@ func logError(err error) {
 	// Write the log data to the file
 	logger.Println(string(jsonLogData))
 
-	// Send a POST request with the log data
-	//http.Post("https://api.bot.demo.pinguin-it.de", "application/json", bytes.NewBuffer(jsonLogData))
 }
 
 func handleConnections(ws *websocket.Conn) {
 	for {
-		// Read in a new message as JSON and map it to a Message object
-		var msg Input
-		err := ws.ReadJSON(&msg)
+		// Read in a new message as bytes
+		_, msgBytes, err := ws.ReadMessage()
 		if err != nil {
 			logError(err)
 			break
 		}
 
+		// Convert the bytes to a string
+		msg := string(msgBytes)
+
 		// Print the message to the console
-		log.Printf("%+v\n", msg)
+		log.Printf("%s\n", msg)
 	}
 }
 
@@ -80,27 +80,47 @@ func contains(slice []string, item string) bool {
 }
 
 func sendRequest(text string, ws *websocket.Conn) {
-	// Store the input in a struct
-	input := Input{Text: text}
-
-	// Print debug to check if the output is correct
-	//fmt.Println("JSON to be sent:", string(jsonInput))
+	// Convert the text to bytes
+	textBytes := []byte(text)
 
 	// Send the request via the websocket
-	err := ws.WriteJSON(input)
+	err := ws.WriteMessage(websocket.TextMessage, textBytes)
 	if err != nil {
 		logError(err)
 		return
 	}
 
-	var response String
-	err = ws.ReadString(&response)
-	if err != nil {
-		logError(err)
-		return
+	// Create a timer that will trigger after 30 seconds
+	timer := time.NewTimer(30 * time.Second)
+
+	// Create a channel to signal when a response is received
+	done := make(chan bool)
+
+	go func() {
+		_, responseBytes, err := ws.ReadMessage()
+		if err != nil {
+			logError(err)
+			return
+		}
+		// Convert the response bytes to a string
+		response := string(responseBytes)
+
+		// Print the response to the console
+		fmt.Printf("%s\n", response)
+
+		// Signal that a response was received
+		done <- true
+	}()
+
+	// Wait for either the response or the timer
+	select {
+	case <-done:
+		// A response was received, so stop the timer
+		timer.Stop()
+	case <-timer.C:
+		// The timer triggered, so print an error message
+		fmt.Println("Error: No response received after 30 seconds")
 	}
-	// Print the response to the console
-	fmt.Printf(response)
 }
 
 func Initializer() {
