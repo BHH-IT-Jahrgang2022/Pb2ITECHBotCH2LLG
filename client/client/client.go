@@ -99,6 +99,17 @@ func sendRequest(text string, ws *websocket.Conn, sessionToken string) {
 		logError(err)
 		return
 	}
+
+	
+	var response Input
+	err = ws.ReadJSON(&response)
+	if err != nil {
+		logError(err)
+		return
+	}
+	// Print the response to the console
+	fmt.Printf(response)
+
 }
 
 func Initializer() {
