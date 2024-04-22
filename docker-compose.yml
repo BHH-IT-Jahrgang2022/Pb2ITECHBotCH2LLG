@@ -23,6 +23,29 @@ services:
     ports:
       - 8081:8081
 
+  api-bot:
+    build: ./api
+    container_name: chatty-api-service
+    depends_on:
+      - matcher-bot
+      - logger-bot
+    networks:
+      - internal
+    ports:
+      - 8080:8080
+    env_file:
+      - ./api/.env
+
+  logger-bot:
+    build: ./logging
+    container_name: chatty-logging-service
+    depends_on:
+      - mariadb-bot
+    networks:
+      - internal
+    env_file:
+      - ./logging/.env
+
   mongodb-bot:
     image: mongodb/mongodb-community-server:latest
     container_name: chatty-matcher-db
@@ -53,6 +76,8 @@ services:
       - internal
     env_file:
       - ./atlas.env
+    ports:
+      - 8081:8081
 
 networks:
   internal:
