@@ -1,11 +1,12 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
-	fmt "fmt"
 	"io"
 	"net/http"
 	"os"
+	"time"
 
 	websocket "github.com/gorilla/websocket"
 
@@ -14,6 +15,12 @@ import (
 
 type Response struct {
 	Response string `json:"message"`
+}
+
+type LogEntry struct {
+	Timestamp string `json:"timestamp"`
+	Level     string `json:"level"`
+	Message   string `json:"message"`
 }
 
 // Helper function handling the chat logic for the chat endpoint
@@ -25,7 +32,13 @@ func chatFunc(query string, analyzer_route string) string {
 	// Send the Text to the analyzer as query parameters and get the JSON response
 	response, err := http.Get(analyzer_route + "?query=" + query)
 	if err != nil {
-		fmt.Println(err)
+		log_entry := LogEntry{
+			Timestamp: time.Now().String(),
+			Level:     "Error",
+			Message:   err.Error(),
+		}
+		// Send the log entry to the logging API
+		log(log_entry)
 	} else {
 		// Decode the JSON response
 		var res Response
@@ -44,9 +57,21 @@ func readFromSocket(c *websocket.Conn) string {
 	_, message, err := c.ReadMessage()
 	if err != nil {
 		if err == io.EOF {
-			fmt.Println("Connection closed")
+			log_entry := LogEntry{
+				Timestamp: time.Now().String(),
+				Level:     "Error",
+				Message:   err.Error(),
+			}
+			// Send the log entry to the logging API
+			log(log_entry)
 		} else {
-			fmt.Println(err)
+			log_entry := LogEntry{
+				Timestamp: time.Now().String(),
+				Level:     "Error",
+				Message:   err.Error(),
+			}
+			// Send the log entry to the logging API
+			log(log_entry)
 		}
 	}
 	return string(message)
@@ -55,14 +80,26 @@ func readFromSocket(c *websocket.Conn) string {
 func writeToSocket(c *websocket.Conn, message string) {
 	err := c.WriteMessage(websocket.TextMessage, []byte(message))
 	if err != nil {
-		fmt.Println(err)
+		log_entry := LogEntry{
+			Timestamp: time.Now().String(),
+			Level:     "Error",
+			Message:   err.Error(),
+		}
+		// Send the log entry to the logging API
+		log(log_entry)
 	}
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		fmt.Println(err)
+		log_entry := LogEntry{
+			Timestamp: time.Now().String(),
+			Level:     "Error",
+			Message:   err.Error(),
+		}
+		// Send the log entry to the logging API
+		log(log_entry)
 		return
 	} else {
 		// Get environment variable for the analyzer route
@@ -73,7 +110,6 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		} else {
 			for {
 				message := readFromSocket(conn)
-				fmt.Println("Message received: " + message)
 				answer := chatFunc(message, analyzer_route)
 				writeToSocket(conn, answer)
 			}
@@ -81,9 +117,26 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func log(entry LogEntry) {
+	// Send the log entry to the logging API
+	logging_API_route := os.Getenv("LOGGING_API_ROUTE")
+	jsonEntry, _ := json.Marshal(entry)
+	_, err := http.Post(logging_API_route, "application/json", bytes.NewBuffer(jsonEntry))
+	if err != nil {
+		log_entry := LogEntry{
+			Timestamp: time.Now().String(),
+			Level:     "Error",
+			Message:   err.Error(),
+		}
+		// Send the log entry to the logging API
+		log(log_entry)
+	}
+}
+
 // Starts the Api
 func StartApi() {
 	sessions := make(map[string]bool)
+
 	r := gin.Default()
 	// Ping test
 	r.GET("/ping", func(c *gin.Context) {
