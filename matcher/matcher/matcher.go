@@ -51,14 +51,14 @@ func LoadTable() *[]Matches {
 	if err != nil {
 		fmt.Print("Error getting data from server: ")
 		fmt.Println(err)
-		return &[]Matches{}
+		return &[]Matches{{Keywords: []string{""}, Phrase: "Derzeit besteht leider ein Problem mit der Datenbankverbindung. Bitte versuchen Sie es später erneut."}}
 	}
 	defer resp.Body.Close()
 	byteValue, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Print("Error reading response body: ")
 		fmt.Println(err)
-		return &[]Matches{}
+		return &[]Matches{{Keywords: []string{""}, Phrase: "Derzeit besteht leider ein Problem mit der Datenbankverbindung. Bitte versuchen Sie es später erneut."}}
 	}
 
 	var matches []Matches
@@ -66,7 +66,7 @@ func LoadTable() *[]Matches {
 	if err != nil {
 		fmt.Print("Error unmarshalling JSON file: ")
 		fmt.Println(err)
-		return &[]Matches{}
+		return &[]Matches{{Keywords: []string{""}, Phrase: "Derzeit besteht leider ein Problem mit der Datenbankverbindung. Bitte versuchen Sie es später erneut."}}
 	}
 
 	fmt.Println("Succesfully initialized the matcher with following matches:")
