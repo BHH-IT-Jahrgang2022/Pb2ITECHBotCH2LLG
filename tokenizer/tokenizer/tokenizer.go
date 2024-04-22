@@ -103,6 +103,10 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 
 func TokenInit() {
 	http.HandleFunc("/tokenize", handleRequest)
+	http.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
+		// Sendet eine erfolgreiche Antwort zurück, wenn die Route aufgerufen wird
+		fmt.Fprint(w, "Pong")
+	})
 	fmt.Println("Server is running on port 8080")
 	http.ListenAndServe(":8080", nil)
 }
