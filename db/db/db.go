@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -23,7 +24,8 @@ type Data struct {
 
 func FetchData() *[]Data {
 	var data []Data
-	clientOptions := options.Client().ApplyURI("mongodb://api:password@192.168.5.11:27017/?authSource=test")
+	url := "mongodb://" + os.Getenv("MONGOUSER") + ":" + os.Getenv("MONGOPASS") + "@" + os.Getenv("MONGOHOST") + ":" + os.Getenv("MONGOPORT") + "/?authSource=" + os.Getenv("MONGODB")
+	clientOptions := options.Client().ApplyURI(url)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	if cancel == nil {
@@ -174,7 +176,8 @@ func FetchData() *[]Data {
 }
 
 func InsertData(data Data, collection string) {
-	clientOptions := options.Client().ApplyURI("mongodb://api:password@192.168.5.11:27017/?authSource=test")
+	url := "mongodb://" + os.Getenv("MONGOUSER") + ":" + os.Getenv("MONGOPASS") + "@" + os.Getenv("MONGOHOST") + ":" + os.Getenv("MONGOPORT") + "/?authSource=" + os.Getenv("MONGODB")
+	clientOptions := options.Client().ApplyURI(url)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	if cancel == nil {
