@@ -104,19 +104,15 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		// Send the log entry to the logging API
 		log(log_entry)
 		return
-	} else {
-		// Get environment variable for the analyzer route
-		// If not set, use default value
-		analyzer_route := os.Getenv("ANALYZER_ROUTE")
-		if analyzer_route == "" {
-			analyzer_route = "http://localhost:8081/getanswer"
-		} else {
-			for {
-				message := readFromSocket(conn)
-				answer := chatFunc(message, analyzer_route)
-				writeToSocket(conn, answer)
-			}
-		}
+	}
+	defer conn.Close()
+	// Get environment variable for the analyzer route
+	// If not set, use default value
+	analyzer_route := os.Getenv("ANALYZER_ROUTE")
+	for {
+		message := readFromSocket(conn)
+		answer := chatFunc(message, analyzer_route)
+		writeToSocket(conn, answer)
 	}
 }
 
@@ -151,7 +147,7 @@ func StartApi() {
 	})
 	//Create Websocket connection with Client
 	r.GET("/chat", func(c *gin.Context) {
-		go handler(c.Writer, c.Request)
+		handler(c.Writer, c.Request)
 	})
 	// Endpoint only for testing purposes
 	r.GET("chat/socketless", func(c *gin.Context) {
