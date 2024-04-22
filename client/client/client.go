@@ -84,23 +84,17 @@ func sendRequest(text string, ws *websocket.Conn, sessionToken string) {
 	// Store the input in a struct
 	input := Input{Text: text, SessionID: sessionToken}
 
-	// Convert the struct to JSON
-	jsonInput, err := json.Marshal(input)
-	if err != nil {
-		logError(err)
-		return
-	}
 	// Print debug to check if the output is correct
 	//fmt.Println("JSON to be sent:", string(jsonInput))
 
 	// Send the request via the websocket
-	err = ws.WriteJSON(input)
+	err := ws.WriteJSON(input)
 	if err != nil {
 		logError(err)
 		return
 	}
 
-	
+
 	var response Input
 	err = ws.ReadJSON(&response)
 	if err != nil {
@@ -108,8 +102,7 @@ func sendRequest(text string, ws *websocket.Conn, sessionToken string) {
 		return
 	}
 	// Print the response to the console
-	fmt.Printf(response)
-
+	fmt.Printf("Received: %+v\n", response)
 }
 
 func Initializer() {
