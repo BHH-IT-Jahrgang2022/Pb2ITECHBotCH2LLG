@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"unicode/utf8"
+	"unicode"
 	"time"
 	"github.com/gorilla/websocket"
 	"github.com/google/uuid"
@@ -118,14 +118,14 @@ func Initializer() {
 
 		// Check if the string only contains printable characters
 		for _, r := range text {
-			if !utf8.IsPrint(r) {
+			if !unicode.IsPrint(r) {
 				fmt.Println("Invalid input. Please enter a string.")
 				continue
 			}
 		}
 
 		if contains(exitKeywords, text) {
-			fmt.Println("Ending the program.")
+			fmt.Println("Danke für ihre Anfrage")
 			break
 		}
 		sendRequest(text, ws, sessionToken) // Call the function to send the request
