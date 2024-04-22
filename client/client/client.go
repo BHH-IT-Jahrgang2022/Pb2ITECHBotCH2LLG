@@ -41,6 +41,19 @@ func logError(err error) {
 	// Convert the log data to JSON
 	jsonLogData, _ := json.Marshal(logData)
 
+	// Open the log file
+	file, err := os.OpenFile("log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	// Create a new logger
+	logger := log.New(file, "", log.LstdFlags)
+
+	// Write the log data to the file
+	logger.Println(string(jsonLogData))
+
 	// Send a POST request with the log data
 	http.Post("https://api.bot.demo.pinguin-it.de", "application/json", bytes.NewBuffer(jsonLogData))
 }
@@ -60,6 +73,7 @@ func handleConnections(ws *websocket.Conn) {
 	}
 }
 
+// String examiner function used for matching keywords later in the text
 func contains(slice []string, item string) bool {
 	for _, a := range slice {
 		if a == item {
@@ -92,7 +106,8 @@ func sendRequest(text string, ws *websocket.Conn, sessionToken string) {
 
 func Initializer() {
 	// Connect to the WebSocket server
-	ws, _, err := websocket.DefaultDialer.Dial("ws://127.0.0.1:8080/chat", nil)
+	wsURL := "ws://" + os.Getenv("WSHOST") + ":" + os.Getenv("WSPORT") + "/chat"
+	ws, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
 	if err != nil {
 		log.Fatal("dial: ", err)
 		logError(err)
