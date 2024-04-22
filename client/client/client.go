@@ -91,7 +91,7 @@ func sendRequest(text string, ws *websocket.Conn, sessionToken string) {
 		return
 	}
 	// Print debug to check if the output is correct
-	fmt.Println("JSON to be sent:", string(jsonInput))
+	//fmt.Println("JSON to be sent:", string(jsonInput))
 
 	// Send the request via the websocket
 	err = ws.WriteJSON(input)
@@ -116,7 +116,7 @@ func Initializer() {
 
 	// loop this and end this with keyword
 	reader := bufio.NewReader(os.Stdin)
-	exitKeywords := []string{"Ende", "Exit", "Quit", "Beenden"} // Add more keywords as needed
+	exitKeywords := []string{"Ende", "Exit", "Quit", "Beenden", "Bye", "Das war alles"} // Add more keywords as needed
 
 	firstIteration := true
 	for {
