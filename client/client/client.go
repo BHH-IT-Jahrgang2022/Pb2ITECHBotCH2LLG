@@ -147,7 +147,7 @@ func Initializer() {
 		// convert CRLF to LF
 		text = strings.Trim(text, "\n")
 
-		text = strings.TrimSpace(text)
+		//text = strings.TrimSpace(text)
 
 		// Check if the string only contains printable characters
 		/*for _, r := range text {
