@@ -47,10 +47,10 @@ func FetchData() *[]Data {
 
 	fmt.Println("Connected to MongoDB!")
 
-	collectionWindowfly := client.Database("test").Collection("windowfly")
-	collectionCleanbug := client.Database("test").Collection("cleanbug")
-	collectionGardenbeetle := client.Database("test").Collection("gardenbeetle")
-	collectionEmpty := client.Database("test").Collection("empty")
+	collectionWindowfly := client.Database(os.Getenv("MONGODB")).Collection("windowfly")
+	collectionCleanbug := client.Database(os.Getenv("MONGODB")).Collection("cleanbug")
+	collectionGardenbeetle := client.Database(os.Getenv("MONGODB")).Collection("gardenbeetle")
+	collectionEmpty := client.Database(os.Getenv("MONGODB")).Collection("empty")
 
 	filter := bson.D{{}}
 
@@ -199,7 +199,7 @@ func InsertData(data Data, collection string) {
 
 	fmt.Println("Connected to MongoDB!")
 
-	collectionName := client.Database("test").Collection(collection)
+	collectionName := client.Database(os.Getenv("MONGODB")).Collection(collection)
 
 	doc := bson.D{
 		{"keywords", data.Keywords},
