@@ -119,7 +119,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 func log(entry LogEntry) {
 	// Send the log entry to the logging API
-	if os.Getenv("Logging_Enabled") == "true" {
+	if os.Getenv("LOGGING_ENABLED") == "true" {
 		logging_API_route := os.Getenv("LOGGING_API_ROUTE")
 		jsonEntry, _ := json.Marshal(entry)
 		_, err := http.Post(logging_API_route, "application/json", bytes.NewBuffer(jsonEntry))
