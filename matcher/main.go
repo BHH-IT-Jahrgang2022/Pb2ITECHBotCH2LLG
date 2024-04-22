@@ -3,12 +3,32 @@ package main
 import (
 	"fmt"
 	"matcher/matcher"
+	"net"
 	"net/url"
+	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
+
+	pingurl := "http://" + os.Getenv("DBHOST") + ":" + os.Getenv("DBPORT") + "/test"
+
+	timeout := 1 * time.Second
+
+	for {
+		_, err := net.DialTimeout("tcp", pingurl, timeout)
+
+		if err != nil {
+			fmt.Println("API not reachable: ", err)
+			break
+		}
+
+		time.Sleep(30 * time.Second)
+
+	}
+
 	matches := matcher.LoadTable()
 
 	/*
