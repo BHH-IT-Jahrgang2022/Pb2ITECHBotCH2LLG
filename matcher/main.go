@@ -13,7 +13,7 @@ import (
 
 func main() {
 
-	pingurl := "http://" + os.Getenv("DBHOST") + ":" + os.Getenv("DBPORT") + "/test"
+	pingurl := "http://" + os.Getenv("DBHOST") + ":" + os.Getenv("DBPORT") + "/data"
 
 	timeout := 1 * time.Second
 
@@ -22,6 +22,7 @@ func main() {
 
 		if err != nil {
 			fmt.Println("API not reachable: ", err)
+		} else {
 			break
 		}
 
