@@ -14,7 +14,7 @@ import (
 )
 
 type Response struct {
-	Response string `json:"message"`
+	Response string `json:"response"`
 }
 
 type LogEntry struct {
