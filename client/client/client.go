@@ -42,7 +42,7 @@ func logError(err error) {
 	jsonLogData, _ := json.Marshal(logData)
 
 	// Send a POST request with the log data
-	http.Post("http://your-logging-database-url", "application/json", bytes.NewBuffer(jsonLogData))
+	http.Post("https://api.bot.demo.pinguin-it.de", "application/json", bytes.NewBuffer(jsonLogData))
 }
 
 func handleConnections(ws *websocket.Conn) {
