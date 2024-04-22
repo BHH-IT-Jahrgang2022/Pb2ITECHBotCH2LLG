@@ -2,11 +2,9 @@ package client
 
 import (
 	"bufio"
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"strings"
 	"unicode"
@@ -55,7 +53,7 @@ func logError(err error) {
 	logger.Println(string(jsonLogData))
 
 	// Send a POST request with the log data
-	http.Post("https://api.bot.demo.pinguin-it.de", "application/json", bytes.NewBuffer(jsonLogData))
+	//http.Post("https://api.bot.demo.pinguin-it.de", "application/json", bytes.NewBuffer(jsonLogData))
 }
 
 func handleConnections(ws *websocket.Conn) {
