@@ -39,6 +39,9 @@ func chatFunc(query string, analyzer_route string) string {
 		}
 		// Send the log entry to the logging API
 		log(log_entry)
+		if os.Getenv("DEBUG") == "true" {
+			result += " Error: " + err.Error()
+		}
 	} else {
 		// Decode the JSON response
 		var res Response
