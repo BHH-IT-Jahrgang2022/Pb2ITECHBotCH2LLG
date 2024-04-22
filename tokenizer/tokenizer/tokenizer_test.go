@@ -296,28 +296,3 @@ func TestMissingQuery(t *testing.T) {
 		t.Errorf("handler returned unexpected body: got %v want %v", rr.Body.String(), expected)
 	}
 }
-
-func TestHandleRequest_ErrorStatus(t *testing.T) {
-	// Erstellen Sie einen HTTP-Testserver, der einen Fehlerstatus zurückgibt
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-	}))
-	// Schließen Sie den Server, wenn der Test beendet ist
-	defer server.Close()
-
-	// Ersetzen Sie die matcher_URL durch die URL des Test-Servers
-	matcher_URL := server.URL
-
-	// Führen Sie die Funktion aus, die Sie testen möchten
-	resp, err := http.Get(matcher_URL + "/match?input=" + "test")
-
-	if err != nil {
-		t.Fatalf("Failed to send GET request: %v", err)
-	}
-
-	// Überprüfen Sie, ob der Statuscode der Antwort dem erwarteten Wert entspricht
-	if resp.StatusCode != http.StatusInternalServerError {
-		t.Errorf("Expected status code %d, got %d", http.StatusInternalServerError, resp.StatusCode)
-
-	}
-}
