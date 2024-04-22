@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"regexp"
 )
 
@@ -44,7 +45,9 @@ func LoadTable() *[]Matches {
 		}
 	*/
 
-	resp, err := http.Get("http://127.0.0.1:8080/data")
+	dburl := "http://" + os.Getenv("DBHOST") + ":" + os.Getenv("DBPORT") + "/data"
+
+	resp, err := http.Get(dburl)
 	if err != nil {
 		fmt.Print("Error getting data from server: ")
 		fmt.Println(err)
