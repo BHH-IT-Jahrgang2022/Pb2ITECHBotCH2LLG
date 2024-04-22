@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 	"github.com/gorilla/websocket"
-	"github.com/google/uuid"
 )
 
 type Input struct {
@@ -80,9 +79,9 @@ func contains(slice []string, item string) bool {
 	return false
 }
 
-func sendRequest(text string, ws *websocket.Conn, sessionToken string) {
+func sendRequest(text string, ws *websocket.Conn) {
 	// Store the input in a struct
-	input := Input{Text: text, SessionID: sessionToken}
+	input := Input{Text: text}
 
 	// Print debug to check if the output is correct
 	//fmt.Println("JSON to be sent:", string(jsonInput))
@@ -94,15 +93,14 @@ func sendRequest(text string, ws *websocket.Conn, sessionToken string) {
 		return
 	}
 
-
-	var response Input
-	err = ws.ReadJSON(&response)
+	var response String
+	err = ws.ReadString(&response)
 	if err != nil {
 		logError(err)
 		return
 	}
 	// Print the response to the console
-	fmt.Printf("Received: %+v\n", response)
+	fmt.Printf(response)
 }
 
 func Initializer() {
@@ -114,9 +112,6 @@ func Initializer() {
 		logError(err)
 	}
 	defer ws.Close()
-
-	// Creation of the session token
-	sessionToken := uuid.New().String()
 
 	// loop this and end this with keyword
 	reader := bufio.NewReader(os.Stdin)
@@ -130,7 +125,9 @@ func Initializer() {
 		}
 		text, _ := reader.ReadString('\n')
 		// convert CRLF to LF
-		text = strings.Replace(text, "\n", "", -1)
+		text = strings.Trim(text, "\n")
+
+		text = strings.TrimSpace(text)
 
 		// Check if the string only contains printable characters
 		/*for _, r := range text {
@@ -144,6 +141,6 @@ func Initializer() {
 			fmt.Println("Danke für ihre Anfrage")
 			break
 		}
-		sendRequest(text, ws, sessionToken) // Call the function to send the request
+		sendRequest(text, ws) // Call the function to send the request
 	}
 }
