@@ -155,7 +155,7 @@ func StartApi() {
 	})
 	// Endpoint only for testing purposes
 	r.GET("chat/socketless", func(c *gin.Context) {
-		answer := chatFunc("Hello", "http://localhost:8081/getanswer")
+		answer := chatFunc("Hello", os.Getenv("ANALYZER_ROUTE"))
 		c.JSON(http.StatusOK, gin.H{
 			"message": answer,
 		})
