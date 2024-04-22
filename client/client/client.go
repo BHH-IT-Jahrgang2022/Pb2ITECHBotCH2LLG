@@ -7,7 +7,6 @@ import (
 	"log"
 	"os"
 	"strings"
-	"unicode"
 	"time"
 	"github.com/gorilla/websocket"
 	"github.com/google/uuid"
@@ -112,7 +111,7 @@ func Initializer() {
 	}
 	defer ws.Close()
 
-	// Mock of the session token
+	// Creation of the session token
 	sessionToken := uuid.New().String()
 
 	// loop this and end this with keyword
@@ -130,12 +129,12 @@ func Initializer() {
 		text = strings.Replace(text, "\n", "", -1)
 
 		// Check if the string only contains printable characters
-		for _, r := range text {
+		/*for _, r := range text {
 			if !unicode.IsPrint(r) {
 				fmt.Println("Invalid input. Please enter a string.")
 				continue
 			}
-		}
+		}*/
 
 		if contains(exitKeywords, text) {
 			fmt.Println("Danke für ihre Anfrage")
