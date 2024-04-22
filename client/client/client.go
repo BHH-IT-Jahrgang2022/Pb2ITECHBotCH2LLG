@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"unicode/utf8"
 	"time"
 	"github.com/gorilla/websocket"
 )
@@ -113,6 +114,14 @@ func Initializer() {
 		text, _ := reader.ReadString('\n')
 		// convert CRLF to LF
 		text = strings.Replace(text, "\n", "", -1)
+
+		// Check if the string only contains printable characters
+		for _, r := range text {
+			if !utf8.IsPrint(r) {
+				fmt.Println("Invalid input. Please enter a string.")
+				continue
+			}
+		}
 
 		if contains(exitKeywords, text) {
 			fmt.Println("Ending the program.")
