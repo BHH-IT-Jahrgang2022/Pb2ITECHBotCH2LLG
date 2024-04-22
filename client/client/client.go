@@ -2,12 +2,14 @@ package client
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"strings"
-
+	"time"
 	"github.com/gorilla/websocket"
 )
 
@@ -16,9 +18,29 @@ type Input struct {
 	SessionID string `json:"token"`
 }
 
+
+type LogData struct {
+	Error     string `json:"error"`
+	Timestamp int64  `json:"timestamp"`
+}
+
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
+}
+
+func logError(err error) {
+	// Get the current Unix timestamp
+	timestamp := time.Now().Unix()
+
+	// Create the log data
+	logData := LogData{Error: err.Error(), Timestamp: timestamp}
+
+	// Convert the log data to JSON
+	jsonLogData, _ := json.Marshal(logData)
+
+	// Send a POST request with the log data
+	http.Post("http://your-logging-database-url", "application/json", bytes.NewBuffer(jsonLogData))
 }
 
 func handleConnections(ws *websocket.Conn) {
@@ -27,7 +49,7 @@ func handleConnections(ws *websocket.Conn) {
 		var msg Input
 		err := ws.ReadJSON(&msg)
 		if err != nil {
-			log.Printf("error: %v", err)
+			logError(err)
 			break
 		}
 
@@ -52,7 +74,7 @@ func sendRequest(text string, ws *websocket.Conn, sessionToken string) {
 	// Convert the struct to JSON
 	jsonInput, err := json.Marshal(input)
 	if err != nil {
-		fmt.Println(err)
+		logError(err)
 		return
 	}
 	// Print debug to check if the output is correct
@@ -61,16 +83,17 @@ func sendRequest(text string, ws *websocket.Conn, sessionToken string) {
 	// Send the request via the websocket
 	err = ws.WriteJSON(input)
 	if err != nil {
-		fmt.Println(err)
+		logError(err)
 		return
 	}
 }
 
 func Initializer() {
 	// Connect to the WebSocket server
-	ws, _, err := websocket.DefaultDialer.Dial("ws://127.0.0.1:8080/ws", nil)
+	ws, _, err := websocket.DefaultDialer.Dial("ws://127.0.0.1:8080/chat", nil)
 	if err != nil {
 		log.Fatal("dial: ", err)
+		logError(err)
 	}
 	defer ws.Close()
 
@@ -79,7 +102,7 @@ func Initializer() {
 
 	// loop this and end this with keyword
 	reader := bufio.NewReader(os.Stdin)
-	exitKeywords := []string{"Ende", "Exit", "Quit"} // Add more keywords as needed
+	exitKeywords := []string{"Ende", "Exit", "Quit", "Beenden"} // Add more keywords as needed
 
 	firstIteration := true
 	for {
