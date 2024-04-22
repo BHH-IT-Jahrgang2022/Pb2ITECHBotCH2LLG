@@ -1,0 +1,44 @@
+---
+services:  
+  db-bot:
+    build: ./db
+    container_name: chatty-db-service
+    networks:
+      - internal
+    env_file:
+      - ./db/.env
+  
+  matcher-bot:
+    build: ./matcher
+    container_name: chatty-matcher-service
+    networks:
+      - internal
+    env_file:
+      - ./matcher/.env
+
+  mongodb-bot:
+    image: mongodb/mongodb-community-server:latest
+    container_name: chatty-matcher-db
+    networks:
+      - internal
+    volumes:
+      - mongodb-data:/data/db
+    env_file:
+      - ./mongodb.env
+
+  mariadb-bot:
+    image: mariadb:latest
+    container_name: chatty-logger-db
+    networks:
+      - internal
+    volumes:
+      - mariadb-data:/var/lib/mysql
+    env_file:
+      - ./mariadb.env
+
+networks:
+  internal:
+
+volumes:
+  mongodb-data:
+  mariadb-data:
