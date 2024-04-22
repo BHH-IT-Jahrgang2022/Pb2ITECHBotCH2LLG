@@ -1,8 +1,11 @@
 ---
+
 services:  
   db-bot:
     build: ./db
     container_name: chatty-db-service
+    depends_on:
+      - mongodb-bot
     networks:
       - internal
     env_file:
@@ -11,10 +14,14 @@ services:
   matcher-bot:
     build: ./matcher
     container_name: chatty-matcher-service
+    depends_on:
+      - db-bot
     networks:
       - internal
     env_file:
       - ./matcher/.env
+    ports:
+      - 8081:8081
 
   mongodb-bot:
     image: mongodb/mongodb-community-server:latest
@@ -22,7 +29,8 @@ services:
     networks:
       - internal
     volumes:
-      - mongodb-data:/data/db
+      #- mongodb-data:/data/db
+      - ./db/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
     env_file:
       - ./mongodb.env
 
@@ -35,6 +43,16 @@ services:
       - mariadb-data:/var/lib/mysql
     env_file:
       - ./mariadb.env
+
+  mongodb-admin:
+    image: mongo-express:latest
+    container_name: chatty-mongo-admin
+    depends_on:
+      - mongodb-bot
+    networks:
+      - internal
+    env_file:
+      - ./atlas.env
 
 networks:
   internal:
