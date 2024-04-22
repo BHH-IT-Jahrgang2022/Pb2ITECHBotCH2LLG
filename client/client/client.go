@@ -12,6 +12,7 @@ import (
 	"unicode/utf8"
 	"time"
 	"github.com/gorilla/websocket"
+	"github.com/google/uuid"
 )
 
 type Input struct {
@@ -99,7 +100,7 @@ func Initializer() {
 	defer ws.Close()
 
 	// Mock of the session token
-	sessionToken := "mockSessionToken"
+	sessionToken := uuid.New().String()
 
 	// loop this and end this with keyword
 	reader := bufio.NewReader(os.Stdin)
