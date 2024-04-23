@@ -36,7 +36,20 @@ services:
       - internal
     env_file:
       - ./unsolveddb/.env
+    ports:
+      - 8280:8080
     
+  mail-bot:
+    build: ./mailClient
+    restart: always
+    container_name: chatty-mail-service
+    depends_on:
+      - unsolved-bot
+    networks:
+      - internal
+    env_file:
+      - ./mailClient/.env
+  
   api-bot:
     build: ./api
     restart: always
@@ -56,7 +69,7 @@ services:
     restart: always
     container_name: chatty-logging-service
     depends_on:
-      - mariadb-bot
+      - redis-db
     networks:
       - internal
     env_file:
@@ -99,17 +112,6 @@ services:
     env_file:
       - ./mongodb.env
 
-  mariadb-bot:
-    image: mariadb:latest
-    restart: always
-    container_name: chatty-logger-db
-    networks:
-      - internal
-    volumes:
-      - mariadb-data:/var/lib/mysql
-    env_file:
-      - ./mariadb.env
-
   mongodb-admin:
     image: mongo-express:latest
     restart: always
@@ -123,10 +125,20 @@ services:
     ports:
       - 8082:8081
 
+  redis-db:
+    image: redis:6.2-alpine
+    restart: always
+    container_name: chatty-logging-db
+    command: redis-server --save 20 1 --loglevel warning --requirepass eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81
+    networks:
+      - internal
+    volumes:
+      - redis-data:/data
+
 networks:
   internal:
 
 volumes:
   mongodb-data:
   mongodb-unsolved-data:
-  mariadb-data:
+  redis-data:

@@ -6,8 +6,8 @@ COPY . .
 
 RUN go mod download
 
-RUN go build -o /logging .
+RUN go build -o mail .
 
 EXPOSE 8080
 
-CMD ["/logging"]
+CMD ["./mail"]
