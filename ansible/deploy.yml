@@ -1,0 +1,31 @@
+---
+- name: Install and deploy Chatbopt
+  hosts: runners
+  vars_files:
+    - vault.yml
+
+  tasks:
+    - name: install | docker engine
+      apt:
+        name: docker-ce
+        state: present
+
+    - name: install | docker cli
+      apt:
+        name: docker-ce-cli
+        state: present
+
+    - name: install | docker containerd engine
+      apt:
+        name: containerd.io
+        state: present
+
+    - name: install | docker build tools
+      apt:
+        name: docker-buildx-plugin
+        state: present
+
+    - name: install | docker compose plugin
+      apt:
+        name: docker-compose-plugin
+        state: present

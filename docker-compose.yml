@@ -2,6 +2,7 @@
 services:  
   db-bot:
     build: ./db
+    restart: always
     container_name: chatty-db-service
     depends_on:
       - mongodb-bot
@@ -14,6 +15,7 @@ services:
   
   matcher-bot:
     build: ./matcher
+    restart: always
     container_name: chatty-matcher-service
     depends_on:
       - db-bot
@@ -26,6 +28,7 @@ services:
 
   api-bot:
     build: ./api
+    restart: always
     container_name: chatty-api-service
     depends_on:
       - tokenizer-bot
@@ -39,6 +42,7 @@ services:
 
   logger-bot:
     build: ./logging
+    restart: always
     container_name: chatty-logging-service
     depends_on:
       - mariadb-bot
@@ -49,6 +53,7 @@ services:
   
   tokenizer-bot:
     build: ./tokenizer
+    restart: always
     container_name: chatty-tokenizer-service
     depends_on:
       - matcher-bot
@@ -62,6 +67,7 @@ services:
 
   mongodb-bot:
     image: mongodb/mongodb-community-server:latest
+    restart: always
     container_name: chatty-matcher-db
     networks:
       - internal
@@ -73,6 +79,7 @@ services:
 
   mariadb-bot:
     image: mariadb:latest
+    restart: always
     container_name: chatty-logger-db
     networks:
       - internal
@@ -83,6 +90,7 @@ services:
 
   mongodb-admin:
     image: mongo-express:latest
+    restart: always
     container_name: chatty-mongo-admin
     depends_on:
       - mongodb-bot

@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"os"
 	"time"
-
+	"fmt"
 	websocket "github.com/gorilla/websocket"
 
 	"github.com/gin-gonic/gin"
@@ -90,7 +90,9 @@ func writeToSocket(c *websocket.Conn, message string) {
 		}
 		// Send the log entry to the logging API
 		log(log_entry)
+		fmt.Println("I BROKE DOWN")
 	}
+	fmt.Println("I AM DONE")
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
@@ -112,6 +114,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	for {
 		message := readFromSocket(conn)
 		answer := chatFunc(message, analyzer_route)
+		fmt.Println("[DEBUG] ", answer)
 		writeToSocket(conn, answer)
 	}
 }
