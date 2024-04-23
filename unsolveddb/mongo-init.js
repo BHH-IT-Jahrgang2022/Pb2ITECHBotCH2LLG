@@ -1,6 +1,6 @@
 db.createUser(
     {
-        user: "api",
+        user: "unsolved",
         pwd: "password",
         roles: [
             {

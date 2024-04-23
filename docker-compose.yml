@@ -26,6 +26,17 @@ services:
     ports:
       - 8081:8081
 
+  unsolved-bot:
+    build: ./unsolveddb
+    restart: always
+    container_name: chatty-unsolved-service
+    depends_on:
+      - matcher-bot
+    networks:
+      - internal
+    env_file:
+      - ./unsolveddb/.env
+    
   api-bot:
     build: ./api
     restart: always
@@ -64,6 +75,17 @@ services:
     ports:
       - 8080:8080
 
+  unsolved-db:
+    image: mongodb/mongodb-community-server:latest
+    restart: always
+    container_name: chatty-unsolved-db
+    networks:
+      - internal
+    volumes:
+      - mongodb-unsolved-data:/data/db
+      - ./unsolveddb/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    env_file:
+      - ./mongounsolveddb.env
 
   mongodb-bot:
     image: mongodb/mongodb-community-server:latest
@@ -106,4 +128,5 @@ networks:
 
 volumes:
   mongodb-data:
+  mongodb-unsolved-data:
   mariadb-data:
