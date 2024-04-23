@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"os/exec"
 	"strings"
 	"net/smtp"
 )
@@ -25,9 +24,10 @@ func SendEmail(ticket *Ticket) {
 	msg := "To: " + to + "\n" +
 		"Subject: " + subject + "\n\n" +
 		body
+
 //buglandbot@gmail.com
 //DeinerMudder123
-//
+
 	// Set up authentication information.
 	smtpHost := "smtp.gmail.com."
 	smtpPort := "587"
