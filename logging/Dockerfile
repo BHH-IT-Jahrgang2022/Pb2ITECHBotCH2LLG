@@ -2,12 +2,12 @@ FROM golang:latest
 
 WORKDIR /app
 
-COPY /app .
+COPY . .
 
 RUN go mod download
 
-RUN go build -o main .
+RUN go build -o /logger .
 
 EXPOSE 8080
 
-CMD ["/app/main"]
+CMD ["/logger"]
