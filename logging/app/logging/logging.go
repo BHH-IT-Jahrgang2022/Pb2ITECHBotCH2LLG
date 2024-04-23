@@ -1,107 +1,80 @@
 package logging
 
 import (
-	"log"
+	"context"
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
 	"time"
 
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
-
 	"github.com/gin-gonic/gin"
-	_ "github.com/go-sql-driver/mysql"
+	redis "github.com/redis/go-redis/v9"
 )
 
-type LogEntryJSON struct {
+type LogEntry struct {
 	Timestamp int64  `json:"timestamp"`
 	Level     string `json:"level"`
 	Message   string `json:"message"`
+	Service   string `json:"service"`
 }
 
-type LogEntryDB struct {
-	ID        int    `gorm:"primaryKey"`
-	Timestamp int64  `gorm:"column:timestamp"`
-	Level     string `gorm:"column:level"`
-	Message   string `gorm:"column:message"`
-}
+var ctx = context.Background()
 
-func InitDB() (*gorm.DB, error) {
-	dsn := os.Getenv("MYSQL_USER") + ":" + os.Getenv("MYSQL_PASSWORD") + "@tcp(" + os.Getenv("MYSQL_HOST") + ":" + os.Getenv("MYSQL_PORT") + ")/" + os.Getenv("MYSQL_DATABASE") + "?charset=utf8mb4&parseTime=True&loc=Local"
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+func set(c *redis.Client, key int64, value LogEntry) {
+	p, err := json.Marshal(value)
 	if err != nil {
-		return nil, err
+		fmt.Println("Error marshalling value ", err)
 	}
-	if err := db.AutoMigrate(&LogEntryDB{}); err != nil {
-		return nil, err
-	}
-	return db, nil
+	c.Set(ctx, fmt.Sprintf("%d", key), p, 0)
 }
 
-// type ConnectionSpecs struct {
-// 	username   string
-// 	password   string
-// 	socketPath string
-// 	database   string
-// }
+func get(c *redis.Client, key string) {
+	p := c.Get(ctx, key).Val()
+	fmt.Println("Value from redis ", p)
+}
 
-// func GetConnStr() string {
-// 	connConfig := ConnectionSpecs{
-// 		username:   os.Getenv("MYSQL_USER"),
-// 		password:   os.Getenv("MYSQL_PASSWORD"),
-// 		socketPath: os.Getenv("MYSQL_SOCKET_PATH"),
-// 		database:   os.Getenv("MYSQL_DATABASE"),
-// 	}
+func InitClient() *redis.Client {
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     os.Getenv("REDIS_HOST") + ":" + os.Getenv("REDIS_PORT"),
+		Password: os.Getenv("REDIS_PASSWORD"), // no password set
+		DB:       0,                           // use default DB
+	})
 
-// 	connStr := connConfig.username + ":" + connConfig.password +
-// 		"@unix(" + connConfig.socketPath + ")" +
-// 		"/" + connConfig.database +
-// 		"?charset=utf8"
-// 	return connStr
-// }
+	err := rdb.Set(ctx, "key", "value", 0).Err()
+	if err != nil {
+		panic(err)
+	}
 
-// Creates a database connection and returns the same
-// func InitDB() (*sql.DB, error) {
-// 	var connStr = GetConnStr()
-// 	fmt.Println(connStr)
-// 	conn, err := sql.Open("mysql", GetConnStr())
-// 	return conn, err
-// }
+	val, err := rdb.Get(ctx, "key").Result()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("key", val)
 
-// func InitDB() *sql.DB {
-// 	sqlConfig := mysql.Config{
-// 		User:   os.Getenv("MYSQL_USER"),
-// 		Passwd: os.Getenv("MYSQL_PASSWORD"),
-// 		Net:    "tcp",
-// 		Addr:   fmt.Sprintf("%s:%s", os.Getenv("MYSQL_HOST"), os.Getenv("MYSQL_PORT")),
-// 		DBName: os.Getenv("Logging_DB"),
-// 	}
-// 	db, err := sql.Open("mysql", sqlConfig.FormatDSN())
-// 	if err != nil {
-// 		log.Fatal(err)
-// 		return nil
-// 	}
-// 	if err := db.Ping(); err != nil {
-// 		log.Fatal(err)
-// 		return nil
-// 	}
-// 	return db
-// }
+	val2, err := rdb.Get(ctx, "key2").Result()
+	if err == redis.Nil {
+		fmt.Println("key2 does not exist")
+	} else if err != nil {
+		panic(err)
+	} else {
+		fmt.Println("key2", val2)
+	}
+	// Output: key value
+	// key2 does not exist
+	return rdb
+}
 
 func StartApi() {
-	time.Sleep(60 * time.Second)
-	db, err := InitDB()
-	if err != nil {
+	db := InitClient()
+	if db == nil {
 		db_connection_timeout := 12
 		for i := 0; i < db_connection_timeout; i++ {
 			time.Sleep(10 * time.Second)
-			db, err = InitDB()
-			if err == nil {
+			db = InitClient()
+			if db != nil {
 				break
 			}
-		}
-		if err != nil {
-			log.Fatal("Could not connect to the database")
 		}
 	}
 
@@ -113,22 +86,31 @@ func StartApi() {
 	})
 	// Endpoint for services to send logs to
 	r.POST("/log", func(c *gin.Context) {
-		var log LogEntryJSON
+		var log LogEntry
 		if err := c.ShouldBindJSON(&log); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error})
 			return
 		}
-		var dbLog LogEntryDB
-		dbLog.Timestamp = log.Timestamp
-		dbLog.Level = log.Level
-		dbLog.Message = log.Message
-		if err := db.Save(dbLog); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error})
+		set(db, time.Now().UnixNano(), log)
+		c.JSON(http.StatusOK, gin.H{"message": "Log saved"})
+	})
+	r.GET("/dump", func(c *gin.Context) {
+		keys, err := db.Keys(ctx, "*").Result()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{"message": "Log saved"})
+		var logs []LogEntry
+		for _, key := range keys {
+			get(db, key)
+			p := db.Get(ctx, key).Val()
+			var log LogEntry
+			json.Unmarshal([]byte(p), &log)
+			logs = append(logs, log)
+		}
+		c.JSON(http.StatusOK, logs)
 	})
 	// Endpoint for services to get logs
 	r.GET("")
-	r.Run(os.Getenv("LOGGING_API_PORT"))
+	r.Run("0.0.0.0:8080")
 }
