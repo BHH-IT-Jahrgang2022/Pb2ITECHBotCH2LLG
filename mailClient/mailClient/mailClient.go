@@ -7,8 +7,8 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"os/exec"
 	"strings"
+	"net/smtp"
 )
 
 type Ticket struct {
@@ -17,7 +17,7 @@ type Ticket struct {
 }
 
 func SendEmail(ticket *Ticket) {
-	to := "buglandbot@pm.me"
+	to := "buglandbot@gmail.com"
 	subject := "New Ticket"
 	body := "Tags: " + strings.Join(ticket.Tags, ", ") + "\nProblem: " + ticket.Problem
 
@@ -25,12 +25,21 @@ func SendEmail(ticket *Ticket) {
 		"Subject: " + subject + "\n\n" +
 		body
 
-	cmd := exec.Command("/usr/sbin/sendmail", "-t")
-	cmd.Stdin = strings.NewReader(msg)
-	err := cmd.Run()
+//buglandbot@gmail.com
+//DeinerMudder123
 
+	// Set up authentication information.
+	smtpHost := "smtp.gmail.com."
+	smtpPort := "587"
+	smtpUser := "buglandbot@gmail.com"
+	smtpPass := "DeineMudder123"
+	auth := smtp.PlainAuth("", smtpUser, smtpPass, smtpHost)
+
+	// Connect to the server, authenticate, set the sender and recipient,
+	// and send the email all in one step.
+	err := smtp.SendMail(smtpHost+":"+smtpPort, auth, smtpUser, []string{to}, []byte(msg))
 	if err != nil {
-		log.Printf("sendmail error: %s", err)
+		log.Printf("smtp error: %s", err)
 		return
 	}
 
