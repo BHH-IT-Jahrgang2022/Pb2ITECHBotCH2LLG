@@ -1,0 +1,109 @@
+---
+services:  
+  db-bot:
+    build: ./db
+    restart: always
+    container_name: chatty-db-service
+    depends_on:
+      - mongodb-bot
+    networks:
+      - internal
+    env_file:
+      - ./db/.env
+    ports:
+      - 8083:8080
+  
+  matcher-bot:
+    build: ./matcher
+    restart: always
+    container_name: chatty-matcher-service
+    depends_on:
+      - db-bot
+    networks:
+      - internal
+    env_file:
+      - ./matcher/.env
+    ports:
+      - 8081:8081
+
+  api-bot:
+    build: ./api
+    restart: always
+    container_name: chatty-api-service
+    depends_on:
+      - tokenizer-bot
+      - logger-bot
+    networks:
+      - internal
+    ports:
+      - 80:8080
+    env_file:
+      - ./api/.env
+
+  logger-bot:
+    build: ./logging
+    restart: always
+    container_name: chatty-logging-service
+    depends_on:
+      - mariadb-bot
+    networks:
+      - internal
+    env_file:
+      - ./logging/.env
+  
+  tokenizer-bot:
+    build: ./tokenizer
+    restart: always
+    container_name: chatty-tokenizer-service
+    depends_on:
+      - matcher-bot
+    networks:
+      - internal
+    env_file:
+      - ./tokenizer/.env
+    ports:
+      - 8080:8080
+
+
+  mongodb-bot:
+    image: mongodb/mongodb-community-server:latest
+    restart: always
+    container_name: chatty-matcher-db
+    networks:
+      - internal
+    volumes:
+      - mongodb-data:/data/db
+      - ./db/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    env_file:
+      - ./mongodb.env
+
+  mariadb-bot:
+    image: mariadb:latest
+    restart: always
+    container_name: chatty-logger-db
+    networks:
+      - internal
+    volumes:
+      - mariadb-data:/var/lib/mysql
+    env_file:
+      - ./mariadb.env
+
+  mongodb-admin:
+    image: mongo-express:latest
+    restart: always
+    container_name: chatty-mongo-admin
+    depends_on:
+      - mongodb-bot
+    networks:
+      - internal
+    env_file:
+      - ./atlas.env
+    ports:
+      - 8082:8081
+
+networks:
+  internal:
+
+volumes:
+  mongodb-data:
+  mariadb-data:

@@ -1,0 +1,8 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - ANALYZER_ROUTE=http://localhost:8080/analyzer:8081

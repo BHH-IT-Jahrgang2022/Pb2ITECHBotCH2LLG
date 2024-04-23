@@ -1,0 +1,30 @@
+[
+    {
+        "keywords": ["Windowfly", "ab*st[u|ü|(ue)]rz"], 
+        "response": "Bitte halten Sie die Windowfly für 5 Minuten und legen sie dann unter eine warme Decke."
+    },
+    {
+        "keywords": ["Windowfly", "ab*schmier"],
+        "response": "Bitte halten Sie die Windowfly für 5 Minuten und legen sie dann unter eine warme Decke."
+    },
+    {
+        "keywords": ["Cleanbug", "anhalten"],
+        "response": "Bitte tauchen Sie den Cleanbug unter Wasser, am Besten entweder in einer Badewanne oder in einem See."
+    },
+    {
+        "keywords": ["Gardenbeetle", "aus*spuck", "Gras"],
+        "response": "Bitte schockfrosten Sie Ihren Gardenbeetle für 10 Minuten."
+    },
+    {
+        "keywords": ["test"],
+        "response": "Successfully matched test"
+    },
+    {
+        "keywords": ["test", "blup"],
+        "response": "Successfully matched more explicit test"
+    },
+    {
+        "keywords": [""],
+        "response": "Entschuldigen Sie bitte, ich habe Sie nicht verstanden. Könnten Sie das bitte weitere Informationen bereitstellen?\nAm Besten nennen Sie das betroffene Produkt und das konkrete Problem."
+    }
+]
