@@ -1,31 +1,220 @@
 ---
-- name: Install and deploy Chatbopt
+- name: Install and deploy Chatbot
   hosts: runners
-  vars_files:
-    - vault.yml
+  vars:
+    ansible_user: runner
 
   tasks:
+
+    - name: patch | fetch and install updates
+      become: yes
+      apt:
+        upgrade: yes
+        update_cache: yes
+
+    - name: install | ca packages
+      become: yes
+      apt:
+        pkg:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+          - python3-pip
+          - virtualenv
+          - python3-setuptools
+        state: latest
+        update_cache: true
+
+    - name: Add Docker GPG apt Key
+      become: yes
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker Repository
+      become: yes
+      apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu focal stable
+        state: present
+
     - name: install | docker engine
+      become: yes
       apt:
         name: docker-ce
         state: present
+        update_cache: true
 
     - name: install | docker cli
+      become: yes
       apt:
         name: docker-ce-cli
         state: present
+        update_cache: true
 
     - name: install | docker containerd engine
+      become: yes
       apt:
         name: containerd.io
         state: present
+        update_cache: true
 
     - name: install | docker build tools
+      become: yes
       apt:
         name: docker-buildx-plugin
         state: present
+        update_cache: true
 
     - name: install | docker compose plugin
+      become: yes
       apt:
         name: docker-compose-plugin
         state: present
+        update_cache: true
+
+    - name: install | docker python package
+      become: yes
+      apt:
+        name: python3-docker
+        state: present
+        update_cache: true
+
+    - name: install | git
+      become: yes
+      apt:
+        name: git
+        state: present
+        update_cache: yes
+
+    - name: install | ufw
+      become: yes
+      apt:
+        name: ufw
+        state: present
+        update_cache: yes
+
+    - name: install | nginx
+      become: yes
+      apt:
+        name: nginx
+        state: present
+        update_cache: yes
+
+    - name: install | certbot and certbot nginx plugin
+      become: yes
+      apt:
+        pkg:
+          - certbot
+          - python3-certbot-nginx
+        state: present
+        update_cache: yes
+
+    - name: git | clone repository
+      git:
+        repo: 'https://github.com/BHH-IT-Jahrgang2022/Pb2ITECHBotCH2LLG'
+        dest: /home/runner/chatty
+        update: yes
+        clone: yes
+
+    - name: security | allow ssh port
+      become: yes
+      ufw:
+        rule: allow
+        port: ssh
+        proto: tcp
+
+    - name: security | allow http port
+      become: yes
+      ufw:
+        rule: allow
+        port: http
+        proto: tcp
+
+    - name: security | allow https port
+      become: yes
+      ufw:
+        rule: allow
+        port: https
+        proto: tcp
+
+    - name: security | enable ufw
+      become: yes
+      ufw:
+        state: enabled
+        policy: deny
+
+    - name: copy | db environment file
+      copy:
+        src: ../db/.env
+        dest: /home/runner/chatty/db/.env
+
+    - name: copy | api environment file
+      copy:
+        src: ../api/.env
+        dest: /home/runner/chatty/api/.env
+    
+    - name: copy | logger environment file
+      copy:
+        src: ../logging/.env
+        dest: /home/runner/chatty/logging/.env
+    
+    - name: copy | matcher environment file
+      copy:
+        src: ../matcher/.env
+        dest: /home/runner/chatty/matcher/.env
+    
+    - name: copy | tokenizer environment file
+      copy:
+        src: ../tokenizer/.env
+        dest: /home/runner/chatty/tokenizer/.env
+
+    - name: copy | matcher database environment file
+      copy:
+        src: ../mongodb.env
+        dest: /home/runner/chatty/mongodb.env
+
+    - name: copy | logging database environment file
+      copy:
+        src: ../mariadb.env
+        dest: /home/runner/chatty/mariadb.env
+
+    - name: copy | mongo atlas environment file
+      copy:
+        src: ../atlas.env
+        dest: /home/runner/chatty/atlas.env
+
+    - name: template | nginx reverse proxy config API
+      become: yes
+      template:
+        src: ./templates/api.bot.demo.pinguin-it.de.j2
+        dest: /etc/nginx/sites-available/api.bot.demo.pinguin-it.de
+
+    - name: compose | shutdown containers if on
+      become: yes
+      community.docker.docker_compose_v2:
+        project_src: /home/runner/chatty
+        state: absent
+
+    - name: compose | build and start containers
+      become: yes
+      community.docker.docker_compose_v2:
+        project_src: /home/runner/chatty
+        build: always
+
+    - name: file | symlink nginx config
+      become: yes
+      shell: "ln -sf /etc/nginx/sites-available/api.bot.demo.pinguin-it.de /etc/nginx/sites-enabled/api.bot.demo.pinguin-it.de"
+      notify: service | restart nginx
+
+    - name: certificates | fetch certificate from certbot
+      become: yes
+      shell: "certbot --non-interactive --nginx -d api.bot.demo.pinguin-it.de"
+      notify: service | restart nginx
+
+  handlers:
+    - name: service | restart nginx
+      become: yes
+      service:
+        name: nginx
+        state: restarted

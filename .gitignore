@@ -22,4 +22,6 @@ go.work
 
 *.env
 
+*.ini
+
 .DS_Store
