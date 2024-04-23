@@ -16,6 +16,11 @@ type Ticket struct {
 	Problem string   `json:"problem"`
 }
 
+type InputData struct {
+	Input string `json:"input"`
+	Timestamp string `json:"timestamp"`
+}
+
 /*func SendEmail(ticket *Ticket) {
 	to := "botbugland@gmail.com"
 	subject := "New Ticket"
@@ -85,6 +90,27 @@ func PrintEmail(ticket *Ticket) {
 		
 	}
 }*/
+
+func ReceiveAndPrintTicket(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var inputData InputData
+	err := json.NewDecoder(r.Body).Decode(&inputData)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	ticket := &Ticket{
+		Tags:    []string{inputData.Input, inputData.Timestamp},
+		Problem: "Received input from endpoint",
+	}
+
+	PrintEmail(ticket)
+}
 
 func FetchAndPrintTicket() {
 	url := "http://" + os.Getenv("UNSOLVEDHOST") + ":" + os.Getenv("UNSOLVEDPORT") + "/data"
