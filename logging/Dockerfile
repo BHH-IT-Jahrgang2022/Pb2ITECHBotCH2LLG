@@ -6,8 +6,8 @@ COPY . .
 
 RUN go mod download
 
-RUN go build -o /logger .
+RUN go build -o /logging .
 
 EXPOSE 8080
 
-CMD ["/logger"]
+CMD ["/logging"]
