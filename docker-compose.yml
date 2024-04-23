@@ -37,6 +37,17 @@ services:
     env_file:
       - ./unsolveddb/.env
     
+  mail-bot:
+    build: ./mailClient
+    restart: always
+    container_name: chatty-mail-service
+    depends_on:
+      - unsolved-bot
+    networks:
+      - internal
+    env_file:
+      - ./mailClient/.env
+  
   api-bot:
     build: ./api
     restart: always
