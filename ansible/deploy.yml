@@ -169,10 +169,20 @@
         src: ../tokenizer/.env
         dest: /home/runner/chatty/tokenizer/.env
 
+    - name: copy | unsolveddb environment file
+      copy:
+        src: ../unsolveddb/.env
+        dest: /home/runner/chatty/unsolveddb/.env
+
     - name: copy | matcher database environment file
       copy:
         src: ../mongodb.env
         dest: /home/runner/chatty/mongodb.env
+
+    - name: copy | unsolved database environment file
+      copy:
+        src: ../mongounsolveddb.env
+        dest: /home/runner/chatty/mongounsolveddb.env
 
     - name: copy | logging database environment file
       copy:
