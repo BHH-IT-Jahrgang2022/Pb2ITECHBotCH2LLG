@@ -1,8 +1,8 @@
-FROM golang:latest
+FROM golang:latest 
 
 WORKDIR /app
 
-COPY /app .
+COPY . .
 
 RUN go mod download
 
