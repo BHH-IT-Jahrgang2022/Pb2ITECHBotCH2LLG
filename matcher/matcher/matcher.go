@@ -1,6 +1,7 @@
 package matcher
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -83,6 +84,41 @@ func printAllMatches(matches *[]Matches) {
 	}
 }
 
+type LogData struct {
+	Tags    []string `json:"tags"`
+	Problem string   `json:"problem"`
+}
+
+func logNoMatch(input string) {
+	logData := LogData{Tags: []string{"unsolved"}, Problem: input}
+	jsonPayload, err := json.Marshal(logData)
+
+	if err != nil {
+		fmt.Print("Error marshalling log data: ")
+		fmt.Println(err)
+	}
+
+	url := "http://" + os.Getenv("UNSOLVEDHOST") + ":" + os.Getenv("UNSOLVEDPORT") + "/insert"
+
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonPayload))
+
+	if err != nil {
+		fmt.Print("Error creating POST request: ")
+		fmt.Println(err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+
+	if err != nil {
+		fmt.Print("Error logging no match: ")
+		fmt.Println(err)
+	}
+	defer resp.Body.Close()
+}
+
 func Match(input string, matches *[]Matches) string {
 	var possibleMatches []int
 	for i, match := range *matches {
@@ -104,10 +140,20 @@ func Match(input string, matches *[]Matches) string {
 	var bestMatch int
 
 	for _, i := range possibleMatches {
-		if len((*matches)[i].Keywords) >= maxLength {
+		if len((*matches)[i].Keywords) > maxLength {
 			maxLength = len((*matches)[i].Keywords)
 			bestMatch = i
 		}
+		if len((*matches)[i].Keywords) == maxLength {
+			if (*matches)[bestMatch].Keywords[0] == "" {
+				bestMatch = i
+			}
+		}
+	}
+
+	if len(possibleMatches) == 1 && (*matches)[bestMatch].Keywords[0] == "" {
+		fmt.Println("No match found")
+		logNoMatch(input)
 	}
 
 	return (*matches)[bestMatch].Phrase
