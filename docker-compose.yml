@@ -36,6 +36,8 @@ services:
       - internal
     env_file:
       - ./unsolveddb/.env
+    ports:
+      - 8280:8080
     
   mail-bot:
     build: ./mailClient

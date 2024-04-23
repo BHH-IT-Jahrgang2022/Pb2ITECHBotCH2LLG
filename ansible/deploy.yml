@@ -174,6 +174,11 @@
         src: ../unsolveddb/.env
         dest: /home/runner/chatty/unsolveddb/.env
 
+    - name: copy | mail service environment file
+      copy:
+        src: ../mailClient/.env
+        dest: /home/runner/chatty/mailClient/.env
+
     - name: copy | matcher database environment file
       copy:
         src: ../mongodb.env
@@ -200,6 +205,12 @@
         src: ./templates/api.bot.demo.pinguin-it.de.j2
         dest: /etc/nginx/sites-available/api.bot.demo.pinguin-it.de
 
+    - name: template | nginx reverse proxy config unsolved
+      become: yes
+      template:
+        src: ./templates/unsolved.bot.demo.pinguin-it.de.j2
+        dest: /etc/nginx/sites-available/unsolved.bot.demo.pinguin-it.de
+
     - name: compose | shutdown containers if on
       become: yes
       community.docker.docker_compose_v2:
@@ -212,14 +223,24 @@
         project_src: /home/runner/chatty
         build: always
 
-    - name: file | symlink nginx config
+    - name: file | symlink api nginx config
       become: yes
       shell: "ln -sf /etc/nginx/sites-available/api.bot.demo.pinguin-it.de /etc/nginx/sites-enabled/api.bot.demo.pinguin-it.de"
       notify: service | restart nginx
 
-    - name: certificates | fetch certificate from certbot
+    - name: file | symlink unsolved nginx config
+      become: yes
+      shell: "ln -sf /etc/nginx/sites-available/api.bot.demo.pinguin-it.de /etc/nginx/sites-enabled/api.bot.demo.pinguin-it.de"
+      notify: service | restart nginx
+
+    - name: certificates | fetch certificate from certbot for api domain
       become: yes
       shell: "certbot --non-interactive --nginx -d api.bot.demo.pinguin-it.de"
+      notify: service | restart nginx
+
+    - name: certificates | fetch certificate from certbot for unsolved domain
+      become: yes
+      shell: "certbot --non-interactive --nginx -d unsolved.bot.demo.pinguin-it.de"
       notify: service | restart nginx
 
   handlers:
