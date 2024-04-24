@@ -10,6 +10,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestMatcherResponse(t *testing.T) {
@@ -294,5 +295,36 @@ func TestMissingQuery(t *testing.T) {
 	received := strings.TrimSpace(rr.Body.String())
 	if received != expected {
 		t.Errorf("handler returned unexpected body: got %v want %v", rr.Body.String(), expected)
+	}
+}
+
+func TestTokenInit(t *testing.T) {
+	// Startet den Server in einem separaten Goroutine
+	go TokenInit()
+
+	// Wartet einen Moment, um sicherzustellen, dass der Server gestartet ist
+	time.Sleep(time.Second)
+
+	// Erstellt eine neue Anfrage an die /ping Route
+	req, err := http.NewRequest("GET", "http://localhost:8080/ping", nil)
+	if err != nil {
+		t.Fatalf("Could not create request: %v", err)
+	}
+
+	// Sendet die Anfrage und erhält die Antwort
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("Could not send request: %v", err)
+	}
+
+	// Liest den Body der Antwort
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("Could not read response body: %v", err)
+	}
+
+	// Überprüft, ob der Body der Antwort "Pong" ist
+	if strings.TrimSpace(string(body)) != "Pong" {
+		t.Errorf("Expected 'Pong', got '%s'", body)
 	}
 }
