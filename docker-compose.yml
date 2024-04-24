@@ -50,6 +50,15 @@ services:
     env_file:
       - ./mailClient/.env
   
+  mail-pit:
+    image: axllent/mailpit
+    restart: always
+    container_name: chatty-mail-pit
+    ports:
+      - 8025:8025
+    networks:
+      - internal
+  
   api-bot:
     build: ./api
     restart: always
