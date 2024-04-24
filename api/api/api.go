@@ -33,6 +33,26 @@ func chatFunc(query string, analyzer_route string) string {
 	result := "Something went wrong"
 	// Send the Text to the analyzer as query parameters and get the JSON response
 	fixed_query := strings.ReplaceAll(query, " ", "%20")
+	fixed_query = strings.ReplaceAll(fixed_query, "?", "%3F")
+	fixed_query = strings.ReplaceAll(fixed_query, "!", "%21")
+	fixed_query = strings.ReplaceAll(fixed_query, "#", "%23")
+	fixed_query = strings.ReplaceAll(fixed_query, "&", "%26")
+	fixed_query = strings.ReplaceAll(fixed_query, "=", "%3D")
+	fixed_query = strings.ReplaceAll(fixed_query, "+", "%2B")
+	fixed_query = strings.ReplaceAll(fixed_query, "/", "%2F")
+	fixed_query = strings.ReplaceAll(fixed_query, ":", "%3A")
+	fixed_query = strings.ReplaceAll(fixed_query, ";", "%3B")
+	fixed_query = strings.ReplaceAll(fixed_query, "@", "%40")
+	fixed_query = strings.ReplaceAll(fixed_query, "[", "%5B")
+	fixed_query = strings.ReplaceAll(fixed_query, "]", "%5D")
+	fixed_query = strings.ReplaceAll(fixed_query, "{", "%7B")
+	fixed_query = strings.ReplaceAll(fixed_query, "}", "%7D")
+	fixed_query = strings.ReplaceAll(fixed_query, "\"", "%22")
+	fixed_query = strings.ReplaceAll(fixed_query, "'", "%27")
+	fixed_query = strings.ReplaceAll(fixed_query, "<", "%3C")
+	fixed_query = strings.ReplaceAll(fixed_query, ">", "%3E")
+	fixed_query = strings.ReplaceAll(fixed_query, "\r", "")
+	fixed_query = strings.ReplaceAll(fixed_query, "\n", "")
 	response, err := http.Get(analyzer_route + "?query=" + fixed_query)
 	if err != nil {
 		log_entry := LogEntry{
