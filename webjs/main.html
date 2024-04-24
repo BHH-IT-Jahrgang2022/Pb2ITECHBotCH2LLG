@@ -1,74 +1,64 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Chat Page</title>
+    <title>Your Website</title>
     <style>
-        #chat-icon {
-            cursor: pointer;
-            width: 50px;
-            height: 50px;
-            background: url('chat-icon.png');
-        }
-        #chat-popup {
-            display: none;
-            position: fixed;
-            bottom: 0;
-            right: 0;
-            width: 300px;
-            height: 400px;
-            border: 1px solid black;
-            padding: 10px;
-            background-color: white;
-        }
+        /* Add your CSS here */
     </style>
 </head>
 <body>
-    <div id="chat-icon"></div>
-    <div id="chat-popup">
+    <h1>Your Title</h1>
+    <p>Your text...</p>
+    <p> img src="your-image.jpg" alt="Your Image" </p>
+    <button id="chatButton">Chat</button>
+
+    <div id="chatPopup" style="display: none;">
+        <button id="closeButton">Close</button>
         <div id="messages"></div>
-        <form id="message-form">
-            <input type="text" id="message-input">
-            <button type="submit">Send</button>
-        </form>
+        <input id="messageInput" type="text">
+        <button id="sendButton">Send</button>
     </div>
 
     <script>
-        var chatIcon = document.getElementById('chat-icon');
-        var chatPopup = document.getElementById('chat-popup');
-        var messageForm = document.getElementById('message-form');
-        var messageInput = document.getElementById('message-input');
-        var messagesDiv = document.getElementById('messages');
         var ws;
+        var chatButton = document.getElementById('chatButton');
+        var chatPopup = document.getElementById('chatPopup');
+        var closeButton = document.getElementById('closeButton');
+        var messages = document.getElementById('messages');
+        var messageInput = document.getElementById('messageInput');
+        var sendButton = document.getElementById('sendButton');
 
-        chatIcon.addEventListener('click', function() {
+        chatButton.onclick = function() {
             chatPopup.style.display = 'block';
             ws = new WebSocket('wss://api.bot.demo.pinguin-it.de/chat');
-
-            ws.onopen = function() {
-                console.log('WebSocket is connected.');
+            ws.onopen = function(event) {
+                console.log('WebSocket is open now.');
             };
-
-            ws.onmessage = function(e) {
-                var p = document.createElement('p');
-                p.textContent = 'Received: ' + e.data;
-                messagesDiv.appendChild(p);
+            ws.onmessage = function(event) {
+                console.log('WebSocket message received:', event.data);
+                var message = document.createElement('p');
+                message.textContent = event.data;
+                messages.appendChild(message);
             };
-
-            ws.onerror = function(e) {
-                console.log('Error occurred: ' + e.message);
+            ws.onclose = function(event) {
+                console.log('WebSocket is closed now.');
             };
-
-            ws.onclose = function() {
-                console.log('WebSocket connection closed.');
+            ws.onerror = function(event) {
+                console.log('WebSocket error: ', event);
             };
-        });
+        };
 
-        messageForm.addEventListener('submit', function(e) {
-            e.preventDefault();
+        closeButton.onclick = function() {
+            chatPopup.style.display = 'none';
+            ws.close();
+        };
+
+        sendButton.onclick = function() {
             var message = messageInput.value;
+            console.log('Sending message: ', message);
             ws.send(message);
             messageInput.value = '';
-        });
+        };
     </script>
 </body>
 </html>
