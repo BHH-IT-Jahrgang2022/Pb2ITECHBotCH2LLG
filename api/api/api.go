@@ -3,11 +3,13 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"strings"
 	"time"
-	"fmt"
+
 	websocket "github.com/gorilla/websocket"
 
 	"github.com/gin-gonic/gin"
@@ -30,7 +32,8 @@ func chatFunc(query string, analyzer_route string) string {
 	// Chat logic
 	result := "Something went wrong"
 	// Send the Text to the analyzer as query parameters and get the JSON response
-	response, err := http.Get(analyzer_route + "?query=" + query)
+	fixed_query := strings.ReplaceAll(query, " ", "%20")
+	response, err := http.Get(analyzer_route + "?query=" + fixed_query)
 	if err != nil {
 		log_entry := LogEntry{
 			Timestamp: time.Now().String(),

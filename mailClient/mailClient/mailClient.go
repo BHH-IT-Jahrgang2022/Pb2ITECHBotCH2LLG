@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/smtp"
 	"os"
 	"strings"
 	//"net/smtp"
@@ -24,10 +25,6 @@ type Ticket struct {
 	msg := "To: " + to + "\n" +
 		"Subject: " + subject + "\n\n" +
 		body
-
-//buglandbot@gmail.com
-//DeinerMudder123
-// Lower security settings in the gmail app -> https://support.google.com/mail/thread/5621336/bad-credentials-using-gmail-smtp?hl=en
 
 	// Set up authentication information.
 	smtpHost := "smtp.gmail.com."

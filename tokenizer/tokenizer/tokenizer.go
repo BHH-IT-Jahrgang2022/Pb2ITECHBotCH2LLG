@@ -56,7 +56,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// sends a GET request to the matcher with the joined tokens as the input
-	resp, err := http.Get(matcher_URL + "/match?input=" + joinedTokens)
+	resp, err := http.Get(matcher_URL + "/match?input=" + joinedTokens + "&query=" + query)
 
 	// checks if the request to the matcher failed
 	if err != nil || resp == nil {
