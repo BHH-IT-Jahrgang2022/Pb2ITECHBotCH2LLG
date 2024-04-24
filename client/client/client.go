@@ -147,6 +147,7 @@ func Initializer() {
 		// convert CRLF to LF
 		text = strings.ReplaceAll(text, " ", "%20")
 		text = strings.Trim(text, "\n")
+    text = strings.Trim(text, "\r")
 
 		//text = strings.TrimSpace(text)
 
