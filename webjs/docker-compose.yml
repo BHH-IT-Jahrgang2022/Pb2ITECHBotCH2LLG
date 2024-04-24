@@ -1,0 +1,13 @@
+---
+services:
+  web-page:
+    build: . # for global compose change to ./webjs
+    restart: always
+    container_name: chatty-web-page
+    networks:
+      - internal
+    ports:
+      - "80:80"
+
+networks:
+  internal:
