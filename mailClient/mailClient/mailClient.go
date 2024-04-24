@@ -9,6 +9,7 @@ import (
 	"net/smtp"
 	"os"
 	"strings"
+	//"net/smtp"
 )
 
 type Ticket struct {
@@ -16,8 +17,8 @@ type Ticket struct {
 	Problem string   `json:"problem"`
 }
 
-func SendEmail(ticket *Ticket) {
-	to := "buglandbot@gmail.com"
+/*func SendEmail(ticket *Ticket) {
+	to := "botbugland@gmail.com"
 	subject := "New Ticket"
 	body := "Tags: " + strings.Join(ticket.Tags, ", ") + "\nProblem: " + ticket.Problem
 
@@ -25,13 +26,10 @@ func SendEmail(ticket *Ticket) {
 		"Subject: " + subject + "\n\n" +
 		body
 
-		//buglandbot@gmail.com
-		//DeinerMudder123
-
 	// Set up authentication information.
 	smtpHost := "smtp.gmail.com."
 	smtpPort := "587"
-	smtpUser := "buglandbot@gmail.com"
+	smtpUser := "botbugland@gmail.com"
 	smtpPass := "DeineMudder123"
 	auth := smtp.PlainAuth("", smtpUser, smtpPass, smtpHost)
 
@@ -45,9 +43,22 @@ func SendEmail(ticket *Ticket) {
 
 	log.Print("Email sent")
 	fmt.Println("")
+}*/
+
+func PrintEmail(ticket *Ticket) {
+	to := "buglandbot@gmail.com"
+	subject := "New Ticket"
+	body := "Tags: " + strings.Join(ticket.Tags, ", ") + "\nProblem: " + ticket.Problem
+
+	msg := "To: " + to + "\n" +
+		"Subject: " + subject + "\n\n" +
+		body
+
+	fmt.Println("Email Content: \n" + msg) // Print the email content to the console
 }
 
-func FetchAndEmailTicket() {
+
+/*func FetchAndEmailTicket() {
 	url := "http://" + os.Getenv("UNSOLVEDHOST") + ":" + os.Getenv("UNSOLVEDPORT") + "/data"
 	resp, err := http.Get(url)
 	if err != nil {
@@ -68,5 +79,30 @@ func FetchAndEmailTicket() {
 
 	for _, ticket := range tickets {
 		SendEmail(&ticket)
+		
+	}
+}*/
+
+func FetchAndPrintTicket() {
+	url := "http://" + os.Getenv("UNSOLVEDHOST") + ":" + os.Getenv("UNSOLVEDPORT") + "/data"
+	resp, err := http.Get(url)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var tickets []Ticket
+	err = json.Unmarshal(body, &tickets)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, ticket := range tickets {
+		PrintEmail(&ticket)
 	}
 }
