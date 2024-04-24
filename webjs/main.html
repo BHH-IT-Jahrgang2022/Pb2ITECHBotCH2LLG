@@ -3,16 +3,36 @@
 <head>
     <title>Your Website</title>
     <style>
-        /* Add your CSS here */
+        #chatPopup {
+            position: fixed;
+            top: 0;
+            left: 33.33%;
+            width: 33.33%;
+            height: 50%;
+            display: none;
+            overflow: auto;
+            background-color: #f1f1f1;
+            border: 1px solid #888;
+            z-index: 1;
+            padding: 10px;
+        }
+        .sent {
+            text-align: right;
+            color: blue;
+        }
+        .received {
+            text-align: left;
+            color: green;
+        }
     </style>
 </head>
 <body>
     <h1>Your Title</h1>
     <p>Your text...</p>
-    <p> img src="your-image.jpg" alt="Your Image" </p>
+    <img src="./chat-icon.png" alt="Your Image">
     <button id="chatButton">Chat</button>
 
-    <div id="chatPopup" style="display: none;">
+    <div id="chatPopup">
         <button id="closeButton">Close</button>
         <div id="messages"></div>
         <input id="messageInput" type="text">
@@ -38,6 +58,7 @@
                 console.log('WebSocket message received:', event.data);
                 var message = document.createElement('p');
                 message.textContent = event.data;
+                message.className = 'received';
                 messages.appendChild(message);
             };
             ws.onclose = function(event) {
@@ -57,6 +78,10 @@
             var message = messageInput.value;
             console.log('Sending message: ', message);
             ws.send(message);
+            var sentMessage = document.createElement('p');
+            sentMessage.textContent = message;
+            sentMessage.className = 'sent';
+            messages.appendChild(sentMessage);
             messageInput.value = '';
         };
     </script>
