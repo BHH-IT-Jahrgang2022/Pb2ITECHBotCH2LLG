@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"matcher/matcher"
@@ -8,7 +9,6 @@ import (
 	"net/url"
 	"os"
 	"time"
-	"bytes"
 
 	"github.com/gin-gonic/gin"
 )
@@ -77,10 +77,17 @@ func main() {
 		c.JSON(200, gin.H{
 			"response": matched_response,
 		})
+		fmt.Println(resolved)
 		if !resolved {
 			Unresolved := Unresolved{Query: decoded_query, Response: matched_response}
-			json_data, _ := json.Marshal(Unresolved)
-			http.Post(os.Getenv("MAILHOST")+":"+os.Getenv("MAILPORT")+"/ticket/matchfailed", "application/json", bytes.NewBuffer(json_data))
+			json_data, err := json.Marshal(Unresolved)
+			if err != nil {
+				fmt.Println(err)
+			}
+			resp, err := http.Post("http://"+os.Getenv("MAILHOST")+":"+os.Getenv("MAILPORT")+"/ticket/matchfailed", "application/json", bytes.NewBuffer(json_data))
+			fmt.Println("not resolved")
+			fmt.Println(resp)
+			fmt.Println(err)
 		}
 	})
 	router.GET("/reload", func(c *gin.Context) {

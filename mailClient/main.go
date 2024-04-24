@@ -28,7 +28,7 @@ func start_API() {
 			"message": "Email sent",
 		})
 	})
-	router.Run(":8080")
+	router.Run("0.0.0.0:8080")
 }
 
 func main() {

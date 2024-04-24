@@ -20,8 +20,6 @@ type Matches struct {
 	Phrase   string   `json:"response"`
 }
 
-var resolved = false
-
 func LoadTable() *[]Matches {
 	// TODO: Update to DB connection instead of local JSON file
 
@@ -75,7 +73,6 @@ func LoadTable() *[]Matches {
 	fmt.Println("Succesfully initialized the matcher with following matches:")
 	printAllMatches(&matches)
 	fmt.Println()
-	resolved = true
 
 	return &matches
 }
@@ -153,10 +150,11 @@ func Match(input string, matches *[]Matches) (string, bool) {
 			}
 		}
 	}
-
-	if len(possibleMatches) == 1 && (*matches)[bestMatch].Keywords[0] == "" {
+	resolved := true
+	if len(possibleMatches) == 1 && len((*matches)[bestMatch].Keywords[0]) == 0 {
 		fmt.Println("No match found")
 		logNoMatch(input)
+		resolved = false
 	}
 
 	return (*matches)[bestMatch].Phrase, resolved

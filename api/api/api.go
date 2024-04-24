@@ -184,11 +184,11 @@ func StartApi() {
 		})
 	})
 	r.GET("")
-	r.Run(":8080")
 	// Endpoint for getting all sessions
 	r.GET("sessions", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"sessions": sessions,
 		})
 	})
+	r.Run(":8080")
 }
