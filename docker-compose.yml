@@ -131,9 +131,22 @@ services:
     networks:
       - internal
     env_file:
-      - ./atlas.env
+      - ./atlas1.env
     ports:
-      - 8082:8081
+      - 8881:8081
+
+  mongodb-unsolved-admin:
+    image: mongo-express:latest
+    restart: always
+    container_name: chatty-unsolved-admin
+    depends_on:
+      - mongodb-bot
+    networks:
+      - internal
+    env_file:
+      - ./atlas2.env
+    ports:
+      - 8882:8081
 
   redis-db:
     image: redis:6.2-alpine
