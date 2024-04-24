@@ -45,10 +45,20 @@ services:
     container_name: chatty-mail-service
     depends_on:
       - unsolved-bot
+      - mailpit-service
     networks:
       - internal
     env_file:
       - ./mailClient/.env
+  
+  mailpit-service:
+    image: axllent/mailpit
+    restart: always
+    container_name: chatty-mailpit-runner
+    ports:
+      - 8025:8025
+    networks:
+      - internal
   
   api-bot:
     build: ./api

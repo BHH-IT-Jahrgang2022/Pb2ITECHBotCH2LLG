@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"matcher/matcher"
 	"net/http"
@@ -10,6 +12,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
+
+type Unresolved struct {
+	Query    string `json:"query"`
+	Response string `json:"response"`
+}
 
 func main() {
 
@@ -56,15 +63,32 @@ func main() {
 	router.GET("/match", func(c *gin.Context) {
 
 		req := c.Query("input")
+		query := c.Query("query")
 
-		decoded := url.QueryEscape(req)
+		decoded_req := url.QueryEscape(req)
+		decoded_query := url.QueryEscape(query)
 
-		fmt.Println("decoded: ", decoded)
+		fmt.Println("decoded Request: ", decoded_req)
+		fmt.Println("decoded Query: ", decoded_query)
 
 		fmt.Println("Received request: ", req)
+		fmt.Println("Received query: ", query)
+		matched_response, resolved := matcher.Match(req, matches)
 		c.JSON(200, gin.H{
-			"response": matcher.Match(req, matches),
+			"response": matched_response,
 		})
+		fmt.Println(resolved)
+		if !resolved {
+			Unresolved := Unresolved{Query: decoded_query, Response: matched_response}
+			json_data, err := json.Marshal(Unresolved)
+			if err != nil {
+				fmt.Println(err)
+			}
+			resp, err := http.Post("http://"+os.Getenv("MAILHOST")+":"+os.Getenv("MAILPORT")+"/ticket/matchfailed", "application/json", bytes.NewBuffer(json_data))
+			fmt.Println("not resolved")
+			fmt.Println(resp)
+			fmt.Println(err)
+		}
 	})
 	router.GET("/reload", func(c *gin.Context) {
 		matches = matcher.LoadTable()

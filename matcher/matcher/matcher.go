@@ -119,7 +119,7 @@ func logNoMatch(input string) {
 	defer resp.Body.Close()
 }
 
-func Match(input string, matches *[]Matches) string {
+func Match(input string, matches *[]Matches) (string, bool) {
 	var possibleMatches []int
 	for i, match := range *matches {
 		var matchCounter int
@@ -150,11 +150,12 @@ func Match(input string, matches *[]Matches) string {
 			}
 		}
 	}
-
-	if len(possibleMatches) == 1 && (*matches)[bestMatch].Keywords[0] == "" {
+	resolved := true
+	if len(possibleMatches) == 1 && len((*matches)[bestMatch].Keywords[0]) == 0 {
 		fmt.Println("No match found")
 		logNoMatch(input)
+		resolved = false
 	}
 
-	return (*matches)[bestMatch].Phrase
+	return (*matches)[bestMatch].Phrase, resolved
 }
