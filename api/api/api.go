@@ -150,6 +150,7 @@ func StartApi() {
 	})
 	//Create Websocket connection with Client
 	r.GET("/chat", func(c *gin.Context) {
+		upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 		handler(c.Writer, c.Request)
 	})
 	// Endpoint only for testing purposes
