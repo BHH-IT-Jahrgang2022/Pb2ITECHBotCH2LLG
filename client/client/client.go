@@ -145,6 +145,7 @@ func Initializer() {
 		}
 		text, _ := reader.ReadString('\n')
 		// convert CRLF to LF
+		text = strings.ReplaceAll(text, " ", "%20")
 		text = strings.Trim(text, "\n")
 
 		//text = strings.TrimSpace(text)
