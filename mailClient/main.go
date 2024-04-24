@@ -14,7 +14,7 @@ type Unresolved struct {
 func start_API() {
 	router := gin.Default()
 	router.POST("/ticket/all", func(c *gin.Context) {
-		mailClient.FetchAndEmailTicket()
+		mailClient.FetchAndPrintTickets()
 		c.JSON(200, gin.H{
 			"message": "Email sent",
 		})
@@ -33,5 +33,5 @@ func start_API() {
 
 func main() {
 	start_API()
-  //mailClient.FetchAndEmailTicket()
+	//mailClient.FetchAndEmailTicket()
 }

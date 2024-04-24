@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"net/smtp"
 	"os"
 	"strings"
 	//"net/smtp"
@@ -45,7 +44,7 @@ type Ticket struct {
 	fmt.Println("")
 }*/
 
-func PrintEmail(ticket *Ticket) {
+func SendEmail(ticket *Ticket) {
 	to := "buglandbot@gmail.com"
 	subject := "New Ticket"
 	body := "Tags: " + strings.Join(ticket.Tags, ", ") + "\nProblem: " + ticket.Problem
@@ -56,7 +55,6 @@ func PrintEmail(ticket *Ticket) {
 
 	fmt.Println("Email Content: \n" + msg) // Print the email content to the console
 }
-
 
 /*func FetchAndEmailTicket() {
 	url := "http://" + os.Getenv("UNSOLVEDHOST") + ":" + os.Getenv("UNSOLVEDPORT") + "/data"
@@ -79,11 +77,11 @@ func PrintEmail(ticket *Ticket) {
 
 	for _, ticket := range tickets {
 		SendEmail(&ticket)
-		
+
 	}
 }*/
 
-func FetchAndPrintTicket() {
+func FetchAndPrintTickets() {
 	url := "http://" + os.Getenv("UNSOLVEDHOST") + ":" + os.Getenv("UNSOLVEDPORT") + "/data"
 	resp, err := http.Get(url)
 	if err != nil {
@@ -103,6 +101,6 @@ func FetchAndPrintTicket() {
 	}
 
 	for _, ticket := range tickets {
-		PrintEmail(&ticket)
+		SendEmail(&ticket)
 	}
 }
