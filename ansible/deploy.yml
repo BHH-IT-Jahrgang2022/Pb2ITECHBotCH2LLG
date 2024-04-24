@@ -230,7 +230,7 @@
 
     - name: file | symlink unsolved nginx config
       become: yes
-      shell: "ln -sf /etc/nginx/sites-available/api.bot.demo.pinguin-it.de /etc/nginx/sites-enabled/api.bot.demo.pinguin-it.de"
+      shell: "ln -sf /etc/nginx/sites-available/unsolved.bot.demo.pinguin-it.de /etc/nginx/sites-enabled/unsolved.bot.demo.pinguin-it.de"
       notify: service | restart nginx
 
     - name: certificates | fetch certificate from certbot for api domain
