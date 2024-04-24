@@ -234,6 +234,12 @@
         src: ./templates/unsolved.admin.bot.demo.pinguin-it.de.j2
         dest: /etc/nginx/sites-available/unsolved.admin.bot.demo.pinguin-it.de
 
+    - name: template | nginx reverse proxy config web
+      become: yes
+      template:
+        src: ./templates/bot.demo.pinguin-it.de.j2
+        dest: /etc/nginx/sites-available/bot.demo.pinguin-it.de
+
     - name: compose | shutdown containers if on
       become: yes
       community.docker.docker_compose_v2:
@@ -271,6 +277,11 @@
       shell: "ln -sf /etc/nginx/sites-available/unsolved.admin.bot.demo.pinguin-it.de /etc/nginx/sites-enabled/unsolved.admin.bot.demo.pinguin-it.de"
       notify: service | restart nginx
 
+    - name: file | symlink web nginx config
+      become: yes
+      shell: "ln -sf /etc/nginx/sites-available/bot.demo.pinguin-it.de /etc/nginx/sites-enabled/bot.demo.pinguin-it.de"
+      notify: service | restart nginx
+
     - name: certificates | fetch certificate from certbot for api domain
       become: yes
       shell: "certbot --non-interactive --nginx -d api.bot.demo.pinguin-it.de"
@@ -294,6 +305,11 @@
     - name: certificates | fetch certificate from certbot for unsolved admin domain
       become: yes
       shell: "certbot --non-interactive --nginx -d unsolved.admin.bot.demo.pinguin-it.de"
+      notify: service | restart nginx
+
+    - name: certificates | fetch certificate from certbot for web domain
+      become: yes
+      shell: "certbot --non-interactive --nginx -d bot.demo.pinguin-it.de"
       notify: service | restart nginx
 
   handlers:
