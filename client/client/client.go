@@ -125,7 +125,7 @@ func sendRequest(text string, ws *websocket.Conn) {
 
 func Initializer() {
 	// Connect to the WebSocket server
-	wsURL := "ws://" + os.Getenv("WSHOST") + ":" + os.Getenv("WSPORT") + "/chat"
+	wsURL := "wss://" + os.Getenv("WSHOST") + ":" + os.Getenv("WSPORT") + "/chat"
 	ws, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
 	if err != nil {
 		log.Fatal("dial: ", err)
