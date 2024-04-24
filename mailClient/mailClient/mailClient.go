@@ -6,9 +6,9 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/smtp"
 	"os"
 	"strings"
-	"net/smtp"
 )
 
 type Ticket struct {
@@ -25,8 +25,8 @@ func SendEmail(ticket *Ticket) {
 		"Subject: " + subject + "\n\n" +
 		body
 
-//buglandbot@gmail.com
-//DeinerMudder123
+		//buglandbot@gmail.com
+		//DeinerMudder123
 
 	// Set up authentication information.
 	smtpHost := "smtp.gmail.com."
