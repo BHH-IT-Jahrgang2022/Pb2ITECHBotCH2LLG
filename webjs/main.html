@@ -3,6 +3,11 @@
 <head>
     <title>Your Website</title>
     <style>
+        #chatButton {
+            position: fixed;
+            right: 0;
+            top: 87.5%;
+        }
         #chatPopup {
             position: fixed;
             top: 0;
@@ -24,6 +29,13 @@
             text-align: left;
             color: green;
         }
+        #messageBar {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+        }
     </style>
 </head>
 <body>
@@ -33,10 +45,12 @@
     <button id="chatButton">Chat</button>
 
     <div id="chatPopup">
-        <button id="closeButton">Close</button>
         <div id="messages"></div>
-        <input id="messageInput" type="text">
-        <button id="sendButton">Send</button>
+        <div id="messageBar">
+            <button id="closeButton">Close</button>
+            <input id="messageInput" type="text">
+            <button id="sendButton">Send</button>
+        </div>
     </div>
 
     <script>
