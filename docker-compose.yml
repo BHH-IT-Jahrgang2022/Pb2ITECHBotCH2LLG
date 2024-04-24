@@ -45,6 +45,7 @@ services:
     container_name: chatty-mail-service
     depends_on:
       - unsolved-bot
+      - mail-pit
     networks:
       - internal
     env_file:
