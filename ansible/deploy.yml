@@ -194,10 +194,15 @@
         src: ../mariadb.env
         dest: /home/runner/chatty/mariadb.env
 
-    - name: copy | mongo atlas environment file
+    - name: copy | mongo atlas1 environment file
       copy:
-        src: ../atlas.env
-        dest: /home/runner/chatty/atlas.env
+        src: ../atlas1.env
+        dest: /home/runner/chatty/atlas1.env
+
+    - name: copy | mongo atlas2 environment file
+      copy:
+        src: ../atlas2.env
+        dest: /home/runner/chatty/atlas2.env
 
     - name: template | nginx reverse proxy config API
       become: yes
@@ -216,6 +221,24 @@
       template:
         src: ./templates/mail.bot.demo.pinguin-it.de.j2
         dest: /etc/nginx/sites-available/mail.bot.demo.pinguin-it.de
+
+    - name: template | nginx reverse proxy config db admin
+      become: yes
+      template:
+        src: ./templates/db.admin.bot.demo.pinguin-it.de.j2
+        dest: /etc/nginx/sites-available/db.admin.bot.demo.pinguin-it.de
+
+    - name: template | nginx reverse proxy config unsolved admin
+      become: yes
+      template:
+        src: ./templates/unsolved.admin.bot.demo.pinguin-it.de.j2
+        dest: /etc/nginx/sites-available/unsolved.admin.bot.demo.pinguin-it.de
+
+    - name: template | nginx reverse proxy config web
+      become: yes
+      template:
+        src: ./templates/bot.demo.pinguin-it.de.j2
+        dest: /etc/nginx/sites-available/bot.demo.pinguin-it.de
 
     - name: compose | shutdown containers if on
       become: yes
@@ -244,6 +267,21 @@
       shell: "ln -sf /etc/nginx/sites-available/mail.bot.demo.pinguin-it.de /etc/nginx/sites-enabled/mail.bot.demo.pinguin-it.de"
       notify: service | restart nginx
 
+    - name: file | symlink db admin nginx config
+      become: yes
+      shell: "ln -sf /etc/nginx/sites-available/db.admin.bot.demo.pinguin-it.de /etc/nginx/sites-enabled/db.admin.bot.demo.pinguin-it.de"
+      notify: service | restart nginx
+
+    - name: file | symlink unsolved admin nginx config
+      become: yes
+      shell: "ln -sf /etc/nginx/sites-available/unsolved.admin.bot.demo.pinguin-it.de /etc/nginx/sites-enabled/unsolved.admin.bot.demo.pinguin-it.de"
+      notify: service | restart nginx
+
+    - name: file | symlink web nginx config
+      become: yes
+      shell: "ln -sf /etc/nginx/sites-available/bot.demo.pinguin-it.de /etc/nginx/sites-enabled/bot.demo.pinguin-it.de"
+      notify: service | restart nginx
+
     - name: certificates | fetch certificate from certbot for api domain
       become: yes
       shell: "certbot --non-interactive --nginx -d api.bot.demo.pinguin-it.de"
@@ -257,6 +295,21 @@
     - name: certificates | fetch certificate from certbot for mail domain
       become: yes
       shell: "certbot --non-interactive --nginx -d mail.bot.demo.pinguin-it.de"
+      notify: service | restart nginx
+
+    - name: certificates | fetch certificate from certbot for db admin domain
+      become: yes
+      shell: "certbot --non-interactive --nginx -d db.admin.bot.demo.pinguin-it.de"
+      notify: service | restart nginx
+
+    - name: certificates | fetch certificate from certbot for unsolved admin domain
+      become: yes
+      shell: "certbot --non-interactive --nginx -d unsolved.admin.bot.demo.pinguin-it.de"
+      notify: service | restart nginx
+
+    - name: certificates | fetch certificate from certbot for web domain
+      become: yes
+      shell: "certbot --non-interactive --nginx -d bot.demo.pinguin-it.de"
       notify: service | restart nginx
 
   handlers:

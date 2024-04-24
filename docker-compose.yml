@@ -25,6 +25,12 @@ services:
       - ./matcher/.env
     ports:
       - 8081:8081
+  
+  web-bot:
+    build: ./webjs
+    restart: always
+    ports:
+      - 8980:80
 
   unsolved-bot:
     build: ./unsolveddb

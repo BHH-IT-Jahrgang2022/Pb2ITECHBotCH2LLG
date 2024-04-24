@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Bugland Ltd.</title>
+    <style>
+        #chatButton {
+            position: fixed;
+            right: 0;
+            top: 87.5%;
+        }
+        #chatPopup {
+            position: fixed;
+            top: 0;
+            left: 33.33%;
+            width: 33.33%;
+            height: 50%;
+            display: none;
+            overflow: hidden;
+            background-color: #f1f1f1;
+            border: 1px solid #888;
+            z-index: 1;
+            padding: 10px;
+        }
+        #chatTitle {
+            position: sticky;
+            top: 0;
+        }
+        #messages {
+            height: calc(100% - 70px); /* Adjust height */
+            overflow-y: auto; /* Add scroll */
+            padding-bottom: 10px;
+        }
+        .sent {
+            text-align: right;
+            color: blue;
+        }
+        .received {
+            text-align: left;
+            color: green;
+        }
+        #messageBar {
+            position: absolute;
+            bottom: 0;
+            width: calc(100% - 30px); /* Adjust width here */
+            display: flex;
+            justify-content: space-between;
+            padding: 0 10px;
+        }
+        #messageInput {
+            flex-grow: 1;
+        }
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .header {
+            background-color: #f8f9fa;
+            text-align: center;
+            padding: 20px;
+        }
+        .product-grid {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+        .product {
+            border: 1px solid #ddd;
+            box-shadow: 0px 0px 10px #ddd;
+            margin: 20px;
+            padding: 20px;
+            width: 30%;
+            text-align: center;
+        }
+        .product img {
+            width: 100%;
+            height: auto;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            text-align: center;
+            padding: 20px;
+            position: fixed;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+        }
+        .footer p {
+            margin: 0;
+        }
+        .footer a {
+            color: #007bff;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Bugland Ltd.</h1>
+        <p>Die Roboter für die Zukunft</p>
+    </div>
+    <button id="chatButton"><img src="./images/chat-icon.png" alt="Chat" width="50px" height="auto"></button>
+    <div class="product-grid">
+        <div class="product">
+            <img src="./images/windowfly.png" alt="Windowfly">
+            <h2>Windowfly</h2>
+            <p>Unser neuer Fensterputzroboter.</p>
+        </div>
+        <div class="product">
+            <img src="./images/cleanbug.png" alt="Cleanbug">
+            <h2>Cleanbug</h2>
+            <p>Unser neuer Wischroboter</p>
+        </div>
+        <div class="product">
+            <img src="./images/gardenbeetle.png" alt="Gardenbeetle">
+            <h2>Gardenbeetle</h2>
+            <p>Unser Kundenliebling: Der Mähroboter</p>
+        </div>
+    </div>
+    <div id="chatPopup">
+        <h2 id="chatTitle">Support Chat-Bot</h2>
+        <div id="messages"></div>
+        <div id="messageBar">
+            <button id="closeButton">Close</button>
+            <input id="messageInput" type="text">
+            <button id="sendButton">Send</button>
+        </div>
+    </div>
+
+    <script>
+        var ws;
+        var chatButton = document.getElementById('chatButton');
+        var chatPopup = document.getElementById('chatPopup');
+        var closeButton = document.getElementById('closeButton');
+        var messages = document.getElementById('messages');
+        var messageInput = document.getElementById('messageInput');
+        var sendButton = document.getElementById('sendButton');
+
+        chatButton.onclick = function() {
+            chatPopup.style.display = 'block';
+            ws = new WebSocket('wss://api.bot.demo.pinguin-it.de/chat');
+            ws.onopen = function(event) {
+                console.log('WebSocket is open now.');
+            };
+            ws.onmessage = function(event) {
+                console.log('WebSocket message received:', event.data);
+                var message = document.createElement('p');
+                message.textContent = event.data;
+                message.className = 'received';
+                messages.appendChild(message);
+                messages.scrollTop = messages.scrollHeight;
+            };
+            ws.onclose = function(event) {
+                console.log('WebSocket is closed now.');
+            };
+            ws.onerror = function(event) {
+                console.log('WebSocket error: ', event);
+            };
+        };
+
+        closeButton.onclick = function() {
+            chatPopup.style.display = 'none';
+            ws.close();
+        };
+
+        messageInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault(); // Prevents the default action (form submission)
+                var tmpmsg = messageInput.value.trim(); // Trim the input string
+                var tmsg = tmpmsg.replace(/\n/g, '');
+                var message = tmsg.replace(/ /g, '');
+                if (message !== '') { // Only send non-empty messages
+                    console.log('Sending message: ', message);
+                    ws.send(message);
+                    var sentMessage = document.createElement('p');
+                    sentMessage.textContent = tmpmsg;
+                    sentMessage.className = 'sent';
+                    messages.appendChild(sentMessage);
+                    messageInput.value = '';
+                    messages.scrollTop = messages.scrollHeight; // Scroll to bottom
+                }
+            }
+        });
+        
+
+        sendButton.onclick = function() {
+            var tempmsg = messageInput.value.trim(); // Trim the input string
+            var tmsg = tempmsg.replace(/\n/g, '');
+            var message = tmsg.replace(/ /g, '');
+            if (message !== '') { // Only send non-empty messages
+                console.log('Sending message: ', message);
+                ws.send(message);
+                var sentMessage = document.createElement('p');
+                sentMessage.textContent = tempmsg;
+                sentMessage.className = 'sent';
+                messages.appendChild(sentMessage);
+                messageInput.value = '';
+                messages.scrollTop = messages.scrollHeight; // Scroll to bottom
+            }
+        };
+    </script>
+    <div class="footer">
+        <p>&copy; 2024 Bugland Ltd. All rights reserved. | <a href="impressum.html">Impressum</a></p>
+        <p>
+            Follow us on:
+            <a href="https://www.facebook.com/">Facebook</a> |
+            <a href="https://www.twitter.com/">Twitter</a> |
+            <a href="https://www.instagram.com/">Instagram</a>
+        </p>
+    </div>
+</body>
+</html>
