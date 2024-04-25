@@ -10,6 +10,22 @@ import (
 	"regexp"
 )
 
+type LogEntry struct {
+	Timestamp int64  `json:"timestamp"`
+	Level     string `json:"level"`
+	Message   string `json:"message"`
+	Service   string `json:"service"`
+}
+
+func logger(entry LogEntry) {
+	// Send the log entry to the logging API
+	if os.Getenv("LOGGING_ENABLED") == "true" {
+		logging_API_route := os.Getenv("LOGGING_API_ROUTE")
+		jsonEntry, _ := json.Marshal(entry)
+		http.Post(logging_API_route+"/log", "application/json", bytes.NewBuffer(jsonEntry))
+	}
+}
+
 func Test() string {
 
 	return "I'm alive!"
@@ -52,6 +68,7 @@ func LoadTable() *[]Matches {
 	if err != nil {
 		fmt.Print("Error getting data from server: ")
 		fmt.Println(err)
+		logger(LogEntry{Timestamp: 0, Level: "ERROR", Message: "Error getting data from server", Service: "matcher"})
 		return &[]Matches{{Keywords: []string{""}, Phrase: "Derzeit besteht leider ein Problem mit der Datenbankverbindung. Bitte versuchen Sie es später erneut."}}
 	}
 	defer resp.Body.Close()
@@ -59,6 +76,7 @@ func LoadTable() *[]Matches {
 	if err != nil {
 		fmt.Print("Error reading response body: ")
 		fmt.Println(err)
+		logger(LogEntry{Timestamp: 0, Level: "ERROR", Message: "Error getting data from server", Service: "matcher"})
 		return &[]Matches{{Keywords: []string{""}, Phrase: "Derzeit besteht leider ein Problem mit der Datenbankverbindung. Bitte versuchen Sie es später erneut."}}
 	}
 
@@ -67,6 +85,7 @@ func LoadTable() *[]Matches {
 	if err != nil {
 		fmt.Print("Error unmarshalling JSON file: ")
 		fmt.Println(err)
+		logger(LogEntry{Timestamp: 0, Level: "ERROR", Message: "Error getting data from server", Service: "matcher"})
 		return &[]Matches{{Keywords: []string{""}, Phrase: "Derzeit besteht leider ein Problem mit der Datenbankverbindung. Bitte versuchen Sie es später erneut."}}
 	}
 
@@ -96,6 +115,7 @@ func logNoMatch(input string) {
 	if err != nil {
 		fmt.Print("Error marshalling log data: ")
 		fmt.Println(err)
+		logger(LogEntry{Timestamp: 0, Level: "ERROR", Message: "Error getting data from server", Service: "matcher"})
 	}
 
 	url := "http://" + os.Getenv("UNSOLVEDHOST") + ":" + os.Getenv("UNSOLVEDPORT") + "/insert"
@@ -105,6 +125,7 @@ func logNoMatch(input string) {
 	if err != nil {
 		fmt.Print("Error creating POST request: ")
 		fmt.Println(err)
+		logger(LogEntry{Timestamp: 0, Level: "ERROR", Message: "Error getting data from server", Service: "matcher"})
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -115,6 +136,7 @@ func logNoMatch(input string) {
 	if err != nil {
 		fmt.Print("Error logging no match: ")
 		fmt.Println(err)
+		logger(LogEntry{Timestamp: 0, Level: "ERROR", Message: "Error getting data from server", Service: "matcher"})
 	}
 	defer resp.Body.Close()
 }
@@ -154,6 +176,7 @@ func Match(input string, matches *[]Matches) (string, bool) {
 	if len(possibleMatches) == 1 && len((*matches)[bestMatch].Keywords[0]) == 0 {
 		fmt.Println("No match found")
 		logNoMatch(input)
+		logger(LogEntry{Timestamp: 0, Level: "INFO", Message: "Error getting data from server", Service: "matcher"})
 		resolved = false
 	}
 

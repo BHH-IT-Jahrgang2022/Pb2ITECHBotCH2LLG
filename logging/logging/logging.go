@@ -21,6 +21,7 @@ type LogEntry struct {
 
 var ctx = context.Background()
 
+// Set a log entry in the database
 func set(c *redis.Client, key int64, value LogEntry) {
 	p, err := json.Marshal(value)
 	if err != nil {
@@ -29,11 +30,19 @@ func set(c *redis.Client, key int64, value LogEntry) {
 	c.Set(ctx, fmt.Sprintf("%d", key), p, 0)
 }
 
-func get(c *redis.Client, key string) {
+// Get a log entry from the database
+func get(c *redis.Client, key string) LogEntry {
 	p := c.Get(ctx, key).Val()
 	fmt.Println("Value from redis ", p)
+	var log LogEntry
+	err := json.Unmarshal([]byte(p), &log)
+	if err != nil {
+		fmt.Println("Error unmarshalling value ", err)
+	}
+	return log
 }
 
+// Initialize the Redis client
 func InitClient() *redis.Client {
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     os.Getenv("REDIS_HOST") + ":" + os.Getenv("REDIS_PORT"),
@@ -94,23 +103,17 @@ func StartApi() {
 		set(db, time.Now().UnixNano(), log)
 		c.JSON(http.StatusOK, gin.H{"message": "Log saved"})
 	})
+	// Returns the entire log, only for debugging purposes
 	r.GET("/dump", func(c *gin.Context) {
-		keys, err := db.Keys(ctx, "*").Result()
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-		var logs []LogEntry
+		logs := make(map[string]LogEntry)
+		keys, _ := db.Keys(ctx, "*").Result()
 		for _, key := range keys {
-			get(db, key)
-			p := db.Get(ctx, key).Val()
-			var log LogEntry
-			json.Unmarshal([]byte(p), &log)
-			logs = append(logs, log)
+			entry := get(db, key)
+			logs[key] = entry
 		}
-		c.JSON(http.StatusOK, logs)
+		fmt.Println("Logs ", logs)
+		c.JSON(http.StatusOK, gin.H{"log_length": len(logs)})
 	})
-	// Endpoint for services to get logs
 	r.GET("")
 	r.Run("0.0.0.0:8080")
 }

@@ -1,6 +1,7 @@
 package mailClient
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -9,7 +10,24 @@ import (
 	"net/smtp"
 	"os"
 	"strings"
+	"time"
 )
+
+type LogEntry struct {
+	Timestamp int64  `json:"timestamp"`
+	Level     string `json:"level"`
+	Message   string `json:"message"`
+	Service   string `json:"service"`
+}
+
+func logger(entry LogEntry) {
+	// Send the log entry to the logging API
+	if os.Getenv("LOGGING_ENABLED") == "true" {
+		logging_API_route := os.Getenv("LOGGING_API_ROUTE")
+		jsonEntry, _ := json.Marshal(entry)
+		http.Post(logging_API_route+"/log", "application/json", bytes.NewBuffer(jsonEntry))
+	}
+}
 
 type Ticket struct {
 	Tags    []string `json:"tags"`
@@ -38,6 +56,7 @@ func SendEmail(ticket *Ticket) {
 	err := smtp.SendMail(smtpHost+":"+smtpPort, auth, smtpUser, []string{to}, []byte(msg))
 	if err != nil {
 		log.Printf("smtp error: %s", err)
+		logger(LogEntry{Timestamp: time.Now().Unix(), Level: "ERROR", Message: "Error sending email", Service: "mailClient"})
 		return
 	}
 
@@ -87,18 +106,21 @@ func FetchAndPrintTickets() {
 	resp, err := http.Get(url)
 	if err != nil {
 		log.Fatal(err)
+		logger(LogEntry{Timestamp: time.Now().Unix(), Level: "ERROR", Message: "Error fetching tickets", Service: "mailClient"})
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Fatal(err)
+		logger(LogEntry{Timestamp: time.Now().Unix(), Level: "ERROR", Message: "Error fetching tickets", Service: "mailClient"})
 	}
 
 	var tickets []Ticket
 	err = json.Unmarshal(body, &tickets)
 	if err != nil {
 		log.Fatal(err)
+		logger(LogEntry{Timestamp: time.Now().Unix(), Level: "ERROR", Message: "Error fetching tickets", Service: "mailClient"})
 	}
 
 	for _, ticket := range tickets {

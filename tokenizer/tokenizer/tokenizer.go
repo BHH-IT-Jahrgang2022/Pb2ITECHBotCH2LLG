@@ -1,6 +1,7 @@
 package tokenizer
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -8,7 +9,24 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"time"
 )
+
+type LogEntry struct {
+	Timestamp int64  `json:"timestamp"`
+	Level     string `json:"level"`
+	Message   string `json:"message"`
+	Service   string `json:"service"`
+}
+
+func logger(entry LogEntry) {
+	// Send the log entry to the logging API
+	if os.Getenv("LOGGING_ENABLED") == "true" {
+		logging_API_route := os.Getenv("LOGGING_API_ROUTE")
+		jsonEntry, _ := json.Marshal(entry)
+		http.Post(logging_API_route+"/log", "application/json", bytes.NewBuffer(jsonEntry))
+	}
+}
 
 type Message struct {
 	Text string `json:"text"`
@@ -32,12 +50,14 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	// checks if the request method is GET
 	if r.Method != http.MethodGet {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		logger(LogEntry{Timestamp: time.Now().Unix(), Level: "ERROR", Message: "Invalid request method", Service: "tokenizer"})
 		return
 	}
 	// parses the query parameter from the URL into a string and checks if it is empty
 	query := r.URL.Query().Get("query")
 	if query == "" {
 		http.Error(w, "Missing query parameter", http.StatusBadRequest)
+		logger(LogEntry{Timestamp: time.Now().Unix(), Level: "ERROR", Message: "Missing query parameter", Service: "tokenizer"})
 		return
 	}
 
@@ -61,6 +81,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	// checks if the request to the matcher failed
 	if err != nil || resp == nil {
 		http.Error(w, "GET request to matcher failed", http.StatusInternalServerError)
+		logger(LogEntry{Timestamp: time.Now().Unix(), Level: "ERROR", Message: "GET request to matcher failed", Service: "tokenizer"})
 		return
 	}
 
@@ -71,6 +92,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger(LogEntry{Timestamp: time.Now().Unix(), Level: "ERROR", Message: err.Error(), Service: "tokenizer"})
 		return
 	}
 
@@ -81,18 +103,21 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal(body, &jsonData)
 	if err != nil {
 		http.Error(w, "Received invalid JSON from matcher", http.StatusInternalServerError)
+		logger(LogEntry{Timestamp: time.Now().Unix(), Level: "ERROR", Message: err.Error(), Service: "tokenizer"})
 		return
 	}
 
 	// checks if the JSON contains the expected attribute "response"
 	if _, ok := jsonData["response"]; !ok {
 		http.Error(w, "Missing expected attribute in JSON from matcher", http.StatusBadRequest)
+		logger(LogEntry{Timestamp: time.Now().Unix(), Level: "ERROR", Message: "Missing expected attribute in JSON from matcher", Service: "tokenizer"})
 		return
 	}
 
 	// checks the number of attributes in the JSON (expected: 1)
 	if len(jsonData) != 1 {
 		http.Error(w, fmt.Sprintf("Expected %d attributes, got %d", 1, len(jsonData)), http.StatusBadRequest)
+		logger(LogEntry{Timestamp: time.Now().Unix(), Level: "ERROR", Message: fmt.Sprintf("Expected %d attributes, got %d", 1, len(jsonData)), Service: "tokenizer"})
 		return
 	}
 
