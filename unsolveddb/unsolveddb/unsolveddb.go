@@ -1,9 +1,12 @@
 package unsolveddb
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"strconv"
 	"time"
@@ -13,6 +16,22 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
+
+type LogEntry struct {
+	Timestamp int64  `json:"timestamp"`
+	Level     string `json:"level"`
+	Message   string `json:"message"`
+	Service   string `json:"service"`
+}
+
+func logger(entry LogEntry) {
+	// Send the log entry to the logging API
+	if os.Getenv("LOGGING_ENABLED") == "true" {
+		logging_API_route := os.Getenv("LOGGING_API_ROUTE")
+		jsonEntry, _ := json.Marshal(entry)
+		http.Post(logging_API_route+"/log", "application/json", bytes.NewBuffer(jsonEntry))
+	}
+}
 
 func Test() string {
 	return "I'm alive"
@@ -32,18 +51,21 @@ func FetchTicket() *[]Ticket {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	if cancel == nil {
 		log.Fatal(cancel)
+		logger(LogEntry{Timestamp: time.Now().Unix(), Level: "ERROR", Message: "Error connecting to MongoDB", Service: "unsolveddb"})
 		return &[]Ticket{{[]string{"resolved"}, "test-entry"}}
 	}
 
 	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
 		log.Fatal(err)
+		logger(LogEntry{Timestamp: time.Now().Unix(), Level: "ERROR", Message: "Error connecting to MongoDB", Service: "unsolveddb"})
 		return &[]Ticket{{[]string{"resolved"}, "test-entry"}}
 	}
 
 	err = client.Ping(ctx, nil)
 	if err != nil {
 		log.Fatal(err)
+		logger(LogEntry{Timestamp: time.Now().Unix(), Level: "ERROR", Message: "Error connecting to MongoDB", Service: "unsolveddb"})
 		return &[]Ticket{{[]string{"resolved"}, "test-entry"}}
 	}
 
@@ -57,6 +79,7 @@ func FetchTicket() *[]Ticket {
 
 	if err != nil {
 		log.Fatal(err)
+		logger(LogEntry{Timestamp: time.Now().Unix(), Level: "ERROR", Message: "Error connecting to MongoDB", Service: "unsolveddb"})
 		return &[]Ticket{{[]string{"resolved"}, "test-entry"}}
 	}
 
@@ -87,6 +110,7 @@ func FetchTicket() *[]Ticket {
 	err = client.Disconnect(ctx)
 	if err != nil {
 		log.Fatal(err)
+		logger(LogEntry{Timestamp: time.Now().Unix(), Level: "ERROR", Message: "Error connecting to MongoDB", Service: "unsolveddb"})
 		return &[]Ticket{{[]string{"resolved"}, "test-entry"}}
 	}
 
@@ -103,18 +127,21 @@ func InsertTicket(data Ticket) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	if cancel == nil {
 		log.Fatal(cancel)
+		logger(LogEntry{Timestamp: time.Now().Unix(), Level: "ERROR", Message: "Error connecting to MongoDB", Service: "unsolveddb"})
 		return
 	}
 
 	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
 		log.Fatal(err)
+		logger(LogEntry{Timestamp: time.Now().Unix(), Level: "ERROR", Message: "Error connecting to MongoDB", Service: "unsolveddb"})
 		return
 	}
 
 	err = client.Ping(ctx, nil)
 	if err != nil {
 		log.Fatal(err)
+		logger(LogEntry{Timestamp: time.Now().Unix(), Level: "ERROR", Message: "Error connecting to MongoDB", Service: "unsolveddb"})
 		return
 	}
 
@@ -131,6 +158,7 @@ func InsertTicket(data Ticket) {
 
 	if err != nil {
 		log.Fatal(err)
+		logger(LogEntry{Timestamp: time.Now().Unix(), Level: "ERROR", Message: "Error connecting to MongoDB", Service: "unsolveddb"})
 		return
 	}
 
@@ -147,18 +175,21 @@ func UpdateTicket(data Ticket, newTags []string) string {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	if cancel == nil {
 		log.Fatal(cancel)
+		logger(LogEntry{Timestamp: time.Now().Unix(), Level: "ERROR", Message: "Error connecting to MongoDB", Service: "unsolveddb"})
 		return "0"
 	}
 
 	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
 		log.Fatal(err)
+		logger(LogEntry{Timestamp: time.Now().Unix(), Level: "ERROR", Message: "Error connecting to MongoDB", Service: "unsolveddb"})
 		return "0"
 	}
 
 	err = client.Ping(ctx, nil)
 	if err != nil {
 		log.Fatal(err)
+		logger(LogEntry{Timestamp: time.Now().Unix(), Level: "ERROR", Message: "Error connecting to MongoDB", Service: "unsolveddb"})
 		return "0"
 	}
 
@@ -172,6 +203,7 @@ func UpdateTicket(data Ticket, newTags []string) string {
 
 	if err != nil {
 		log.Fatal(err)
+		logger(LogEntry{Timestamp: time.Now().Unix(), Level: "ERROR", Message: "Error connecting to MongoDB", Service: "unsolveddb"})
 		return "0"
 	}
 
@@ -182,6 +214,7 @@ func UpdateTicket(data Ticket, newTags []string) string {
 		err := cur.Decode(&result)
 		if err != nil {
 			log.Fatal(err)
+			logger(LogEntry{Timestamp: time.Now().Unix(), Level: "ERROR", Message: "Error connecting to MongoDB", Service: "unsolveddb"})
 			return "0"
 		}
 
@@ -213,6 +246,7 @@ func UpdateTicket(data Ticket, newTags []string) string {
 
 		if err != nil {
 			log.Fatal(err)
+			logger(LogEntry{Timestamp: time.Now().Unix(), Level: "ERROR", Message: "Error connecting to MongoDB", Service: "unsolveddb"})
 			return "0"
 		}
 
