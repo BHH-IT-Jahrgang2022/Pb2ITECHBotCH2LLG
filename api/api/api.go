@@ -20,9 +20,19 @@ type Response struct {
 }
 
 type LogEntry struct {
-	Timestamp string `json:"timestamp"`
+	Timestamp int64  `json:"timestamp"`
 	Level     string `json:"level"`
 	Message   string `json:"message"`
+	Service   string `json:"service"`
+}
+
+func logger(entry LogEntry) {
+	// Send the log entry to the logging API
+	if os.Getenv("LOGGING_ENABLED") == "true" {
+		logging_API_route := os.Getenv("LOGGING_API_ROUTE")
+		jsonEntry, _ := json.Marshal(entry)
+		http.Post(logging_API_route+"/log", "application/json", bytes.NewBuffer(jsonEntry))
+	}
 }
 
 // Helper function handling the chat logic for the chat endpoint
@@ -56,12 +66,13 @@ func chatFunc(query string, analyzer_route string) string {
 	response, err := http.Get(analyzer_route + "?query=" + fixed_query)
 	if err != nil {
 		log_entry := LogEntry{
-			Timestamp: time.Now().String(),
+			Timestamp: time.Now().Unix(),
 			Level:     "Error",
 			Message:   err.Error(),
+			Service:   "api",
 		}
 		// Send the log entry to the logging API
-		log(log_entry)
+		logger(log_entry)
 		if os.Getenv("DEBUG") == "true" {
 			result += " Error: " + err.Error()
 		}
@@ -84,20 +95,22 @@ func readFromSocket(c *websocket.Conn) string {
 	if err != nil {
 		if err == io.EOF {
 			log_entry := LogEntry{
-				Timestamp: time.Now().String(),
+				Timestamp: time.Now().Unix(),
 				Level:     "Error",
 				Message:   err.Error(),
+				Service:   "api",
 			}
 			// Send the log entry to the logging API
-			log(log_entry)
+			logger(log_entry)
 		} else {
 			log_entry := LogEntry{
-				Timestamp: time.Now().String(),
+				Timestamp: time.Now().Unix(),
 				Level:     "Error",
 				Message:   err.Error(),
+				Service:   "api",
 			}
 			// Send the log entry to the logging API
-			log(log_entry)
+			logger(log_entry)
 		}
 	}
 	return string(message)
@@ -107,12 +120,13 @@ func writeToSocket(c *websocket.Conn, message string) {
 	err := c.WriteMessage(websocket.TextMessage, []byte(message))
 	if err != nil {
 		log_entry := LogEntry{
-			Timestamp: time.Now().String(),
+			Timestamp: time.Now().Unix(),
 			Level:     "Error",
 			Message:   err.Error(),
+			Service:   "api",
 		}
 		// Send the log entry to the logging API
-		log(log_entry)
+		logger(log_entry)
 		fmt.Println("I BROKE DOWN")
 	}
 	fmt.Println("I AM DONE")
@@ -122,12 +136,13 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log_entry := LogEntry{
-			Timestamp: time.Now().String(),
+			Timestamp: time.Now().Unix(),
 			Level:     "Error",
 			Message:   err.Error(),
+			Service:   "api",
 		}
 		// Send the log entry to the logging API
-		log(log_entry)
+		logger(log_entry)
 		return
 	}
 	defer conn.Close()
@@ -142,53 +157,50 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func log(entry LogEntry) {
-	// Send the log entry to the logging API
-	if os.Getenv("LOGGING_ENABLED") == "true" {
-		logging_API_route := os.Getenv("LOGGING_API_ROUTE")
-		jsonEntry, _ := json.Marshal(entry)
-		_, err := http.Post(logging_API_route, "application/json", bytes.NewBuffer(jsonEntry))
-		if err != nil {
-			log_entry := LogEntry{
-				Timestamp: time.Now().String(),
-				Level:     "Error",
-				Message:   err.Error(),
-			}
-			// Send the log entry to the logging API
-			log(log_entry)
-		}
-	}
-}
-
 // Starts the Api
 func StartApi() {
 	sessions := make(map[string]bool)
 
 	r := gin.Default()
-	// Ping test
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "pong",
-		})
-	})
+	r.GET("")
 	//Create Websocket connection with Client
 	r.GET("/chat", func(c *gin.Context) {
 		upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 		handler(c.Writer, c.Request)
 	})
-	// Endpoint only for testing purposes
-	r.GET("chat/socketless", func(c *gin.Context) {
-		answer := chatFunc("Hello", os.Getenv("ANALYZER_ROUTE"))
-		c.JSON(http.StatusOK, gin.H{
-			"message": answer,
+	// ENDPOINTS FOR DEBUGGING PURPOSES //
+	// -------------------------------- //
+	if os.Getenv("DEBUG") == "true" {
+		// Ping test
+		r.GET("/ping", func(c *gin.Context) {
+			c.JSON(http.StatusOK, gin.H{
+				"message": "pong",
+			})
 		})
-	})
-	r.GET("")
-	// Endpoint for getting all sessions
-	r.GET("sessions", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"sessions": sessions,
+		// Endpoint only for testing purposes
+		r.GET("chat/socketless", func(c *gin.Context) {
+			answer := chatFunc("Hello", os.Getenv("ANALYZER_ROUTE"))
+			c.JSON(http.StatusOK, gin.H{
+				"message": answer,
+			})
 		})
-	})
+		// Endpoint for getting all sessions
+		r.GET("sessions", func(c *gin.Context) {
+			c.JSON(http.StatusOK, gin.H{
+				"sessions": sessions,
+			})
+		})
+		r.GET("log/test", func(c *gin.Context) {
+			fmt.Println("Test log entry")
+			var testlog LogEntry
+			testlog.Timestamp = time.Now().Unix()
+			testlog.Level = "Info"
+			testlog.Message = "Test log entry"
+			testlog.Service = "api"
+			c.JSON(http.StatusOK, gin.H{
+				"message": "Log entry sent",
+			})
+		})
+	}
 	r.Run(":8080")
 }
