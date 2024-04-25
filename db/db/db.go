@@ -1,9 +1,12 @@
 package db
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"time"
 
@@ -12,6 +15,22 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
+
+type LogEntry struct {
+	Timestamp int64  `json:"timestamp"`
+	Level     string `json:"level"`
+	Message   string `json:"message"`
+	Service   string `json:"service"`
+}
+
+func logger(entry LogEntry) {
+	// Send the log entry to the logging API
+	if os.Getenv("LOGGING_ENABLED") == "true" {
+		logging_API_route := os.Getenv("LOGGING_API_ROUTE")
+		jsonEntry, _ := json.Marshal(entry)
+		http.Post(logging_API_route+"/log", "application/json", bytes.NewBuffer(jsonEntry))
+	}
+}
 
 func Test() string {
 	return "I'm alive"
@@ -30,18 +49,21 @@ func FetchData() *[]Data {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	if cancel == nil {
 		log.Fatal(cancel)
+		logger(LogEntry{Timestamp: time.Now().Unix(), Level: "Error", Message: "Error in context.WithTimeout", Service: "db"})
 		return &[]Data{}
 	}
 
 	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
 		log.Fatal(err)
+		logger(LogEntry{Timestamp: time.Now().Unix(), Level: "Error", Message: "Error in mongo.Connect", Service: "db"})
 		return &[]Data{}
 	}
 
 	err = client.Ping(ctx, nil)
 	if err != nil {
 		log.Fatal(err)
+		logger(LogEntry{Timestamp: time.Now().Unix(), Level: "Error", Message: "Error in client.Ping", Service: "db"})
 		return &[]Data{}
 	}
 
@@ -58,22 +80,26 @@ func FetchData() *[]Data {
 
 	if err != nil {
 		log.Fatal(err)
+		logger(LogEntry{Timestamp: time.Now().Unix(), Level: "Error", Message: "Error in collectionWindowfly.Find", Service: "db"})
 		return &[]Data{}
 	}
 
 	curBug, err := collectionCleanbug.Find(ctx, filter)
 	if err != nil {
 		log.Fatal(err)
+		logger(LogEntry{Timestamp: time.Now().Unix(), Level: "Error", Message: "Error in collectionCleanbug.Find", Service: "db"})
 		return &[]Data{}
 	}
 	curBeetle, err := collectionGardenbeetle.Find(ctx, filter)
 	if err != nil {
 		log.Fatal(err)
+		logger(LogEntry{Timestamp: time.Now().Unix(), Level: "Error", Message: "Error in collectionGardenbeetle.Find", Service: "db"})
 		return &[]Data{}
 	}
 	curEmpty, err := collectionEmpty.Find(ctx, filter)
 	if err != nil {
 		log.Fatal(err)
+		logger(LogEntry{Timestamp: time.Now().Unix(), Level: "Error", Message: "Error in collectionEmpty.Find", Service: "db"})
 		return &[]Data{}
 	}
 
@@ -83,6 +109,7 @@ func FetchData() *[]Data {
 		err := curFly.Decode(&result)
 		if err != nil {
 			log.Fatal(err)
+			logger(LogEntry{Timestamp: time.Now().Unix(), Level: "Error", Message: "Error in curFly.Decode", Service: "db"})
 			return &[]Data{}
 		}
 
@@ -105,6 +132,7 @@ func FetchData() *[]Data {
 		err := curBug.Decode(&result)
 		if err != nil {
 			log.Fatal(err)
+			logger(LogEntry{Timestamp: time.Now().Unix(), Level: "Error", Message: "Error in curBug.Decode", Service: "db"})
 			return &[]Data{}
 		}
 		fmt.Println(result["keywords"])
@@ -126,6 +154,7 @@ func FetchData() *[]Data {
 		err := curBeetle.Decode(&result)
 		if err != nil {
 			log.Fatal(err)
+			logger(LogEntry{Timestamp: time.Now().Unix(), Level: "Error", Message: "Error in curBeetle.Decode", Service: "db"})
 			return &[]Data{}
 		}
 		fmt.Println(result["keywords"])
@@ -146,6 +175,7 @@ func FetchData() *[]Data {
 		err := curEmpty.Decode(&result)
 		if err != nil {
 			log.Fatal(err)
+			logger(LogEntry{Timestamp: time.Now().Unix(), Level: "Error", Message: "Error in curEmpty.Decode", Service: "db"})
 			return &[]Data{}
 		}
 		fmt.Println(result["keywords"])
@@ -167,6 +197,7 @@ func FetchData() *[]Data {
 	err = client.Disconnect(ctx)
 	if err != nil {
 		log.Fatal(err)
+		logger(LogEntry{Timestamp: time.Now().Unix(), Level: "Error", Message: "Error in client.Disconnect", Service: "db"})
 		return &[]Data{}
 	}
 
@@ -182,18 +213,21 @@ func InsertData(data Data, collection string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	if cancel == nil {
 		log.Fatal(cancel)
+		logger(LogEntry{Timestamp: time.Now().Unix(), Level: "Error", Message: "Error in context.WithTimeout", Service: "db"})
 		return
 	}
 
 	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
 		log.Fatal(err)
+		logger(LogEntry{Timestamp: time.Now().Unix(), Level: "Error", Message: "Error in mongo.Connect", Service: "db"})
 		return
 	}
 
 	err = client.Ping(ctx, nil)
 	if err != nil {
 		log.Fatal(err)
+		logger(LogEntry{Timestamp: time.Now().Unix(), Level: "Error", Message: "Error in client.Ping", Service: "db"})
 		return
 	}
 
@@ -210,6 +244,7 @@ func InsertData(data Data, collection string) {
 
 	if err != nil {
 		log.Fatal(err)
+		logger(LogEntry{Timestamp: time.Now().Unix(), Level: "Error", Message: "Error in collectionName.InsertOne", Service: "db"})
 		return
 	}
 

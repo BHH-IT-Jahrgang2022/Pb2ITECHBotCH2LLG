@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
-	"strings"
 	"time"
 
 	websocket "github.com/gorilla/websocket"
@@ -42,28 +42,10 @@ func chatFunc(query string, analyzer_route string) string {
 	// Chat logic
 	result := "Something went wrong"
 	// Send the Text to the analyzer as query parameters and get the JSON response
-	fixed_query := strings.ReplaceAll(query, " ", "%20")
-	fixed_query = strings.ReplaceAll(fixed_query, "?", "%3F")
-	fixed_query = strings.ReplaceAll(fixed_query, "!", "%21")
-	fixed_query = strings.ReplaceAll(fixed_query, "#", "%23")
-	fixed_query = strings.ReplaceAll(fixed_query, "&", "%26")
-	fixed_query = strings.ReplaceAll(fixed_query, "=", "%3D")
-	fixed_query = strings.ReplaceAll(fixed_query, "+", "%2B")
-	fixed_query = strings.ReplaceAll(fixed_query, "/", "%2F")
-	fixed_query = strings.ReplaceAll(fixed_query, ":", "%3A")
-	fixed_query = strings.ReplaceAll(fixed_query, ";", "%3B")
-	fixed_query = strings.ReplaceAll(fixed_query, "@", "%40")
-	fixed_query = strings.ReplaceAll(fixed_query, "[", "%5B")
-	fixed_query = strings.ReplaceAll(fixed_query, "]", "%5D")
-	fixed_query = strings.ReplaceAll(fixed_query, "{", "%7B")
-	fixed_query = strings.ReplaceAll(fixed_query, "}", "%7D")
-	fixed_query = strings.ReplaceAll(fixed_query, "\"", "%22")
-	fixed_query = strings.ReplaceAll(fixed_query, "'", "%27")
-	fixed_query = strings.ReplaceAll(fixed_query, "<", "%3C")
-	fixed_query = strings.ReplaceAll(fixed_query, ">", "%3E")
-	fixed_query = strings.ReplaceAll(fixed_query, "\r", "")
-	fixed_query = strings.ReplaceAll(fixed_query, "\n", "")
-	response, err := http.Get(analyzer_route + "?query=" + fixed_query)
+	// Catch a bunch of possible problematic inputs and replace them with their URL encoded counterparts
+	// This is necessary to avoid errors when sending the query as a URL parameter
+	// Then Query the analyzer (In this case the Tokenizer -> Matcher chain)
+	response, err := http.Get(analyzer_route + "?query=" + url.QueryEscape(query))
 	if err != nil {
 		log_entry := LogEntry{
 			Timestamp: time.Now().Unix(),
@@ -90,6 +72,7 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 }
 
+// Helper function to read from the websocket
 func readFromSocket(c *websocket.Conn) string {
 	_, message, err := c.ReadMessage()
 	if err != nil {
@@ -116,6 +99,7 @@ func readFromSocket(c *websocket.Conn) string {
 	return string(message)
 }
 
+// Helper function to write to the websocket
 func writeToSocket(c *websocket.Conn, message string) {
 	err := c.WriteMessage(websocket.TextMessage, []byte(message))
 	if err != nil {
@@ -132,6 +116,7 @@ func writeToSocket(c *websocket.Conn, message string) {
 	fmt.Println("I AM DONE")
 }
 
+// Handler function for the chat endpoint
 func handler(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -190,6 +175,7 @@ func StartApi() {
 				"sessions": sessions,
 			})
 		})
+		// Endpoint for testing the logging
 		r.GET("log/test", func(c *gin.Context) {
 			fmt.Println("Test log entry")
 			var testlog LogEntry
