@@ -21,6 +21,7 @@ type LogEntry struct {
 
 var ctx = context.Background()
 
+// Set a log entry in the database
 func set(c *redis.Client, key int64, value LogEntry) {
 	p, err := json.Marshal(value)
 	if err != nil {
@@ -29,6 +30,7 @@ func set(c *redis.Client, key int64, value LogEntry) {
 	c.Set(ctx, fmt.Sprintf("%d", key), p, 0)
 }
 
+// Get a log entry from the database
 func get(c *redis.Client, key string) LogEntry {
 	p := c.Get(ctx, key).Val()
 	fmt.Println("Value from redis ", p)
@@ -40,6 +42,7 @@ func get(c *redis.Client, key string) LogEntry {
 	return log
 }
 
+// Initialize the Redis client
 func InitClient() *redis.Client {
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     os.Getenv("REDIS_HOST") + ":" + os.Getenv("REDIS_PORT"),
